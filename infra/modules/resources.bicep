@@ -218,6 +218,7 @@ module apiApp './container-app.bicep' = {
     tags: union(tags, { 'azd-service-name': 'api' })
     containerAppsEnvironmentId: containerAppsEnv.id
     userAssignedIdentityId: identity.id
+    acrLoginServer: acr.properties.loginServer
     keyVaultUri: keyVault.properties.vaultUri
     applicationInsightsConnectionString: applicationInsights.properties.ConnectionString
     corsOrigin: 'https://${staticWebApp.properties.defaultHostname}'
@@ -226,6 +227,7 @@ module apiApp './container-app.bicep' = {
     postgresConnectionSecret
     jwtSecret
     kvSecretsUser
+    acrPullRoleUser
   ]
 }
 
@@ -234,6 +236,14 @@ module acrPullRole './acr-pull-role.bicep' = {
   params: {
     acrName: acr.name
     principalId: apiApp.outputs.systemAssignedMIPrincipalId
+  }
+}
+
+module acrPullRoleUser './acr-pull-role.bicep' = {
+  name: 'acr-pull-role-user'
+  params: {
+    acrName: acr.name
+    principalId: identity.properties.principalId
   }
 }
 

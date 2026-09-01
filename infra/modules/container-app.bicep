@@ -3,6 +3,7 @@ param location string
 param tags object
 param containerAppsEnvironmentId string
 param userAssignedIdentityId string
+param acrLoginServer string
 param keyVaultUri string
 param applicationInsightsConnectionString string
 param corsOrigin string
@@ -31,6 +32,12 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           affinity: 'sticky'
         }
       }
+      registries: [
+        {
+          server: acrLoginServer
+          identity: userAssignedIdentityId
+        }
+      ]
       secrets: [
         {
           name: 'postgres-connection'
