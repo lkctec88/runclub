@@ -1,0 +1,23 @@
+name: runclub
+metadata:
+  template: runclub@0.0.1
+services:
+  api:
+    project: .
+    host: containerapp
+    image: api
+    docker:
+      path: ./api/Dockerfile
+      context: .
+  web:
+    project: ./web
+    language: js
+    host: staticwebapp
+    dist: dist
+hooks:
+  predeploy:
+    shell: pwsh
+    run: |
+      if ($env:API_URI) {
+        Set-Content -Path web/.env.production -Value "VITE_API_URL=$env:API_URI"
+      }

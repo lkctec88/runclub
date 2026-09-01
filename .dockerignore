@@ -1,0 +1,15 @@
+.git
+.github
+.azure
+.vscode
+web
+**/bin
+**/obj
+**/.vs
+**/*.user
+**/node_modules
+**/.env
+**/.env.*
+.dockerignore
+Dockerfile
+README.md

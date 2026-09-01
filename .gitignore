@@ -1,0 +1,16 @@
+.azure/*
+!.azure/deployment-plan.md
+
+infra/main.json
+
+**/bin/
+**/obj/
+**/.vs/
+*.user
+*.suo
+
+.env
+.env.*
+web/.env.production
+
+node_modules/

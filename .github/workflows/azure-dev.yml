@@ -1,0 +1,47 @@
+# One-time setup from a developer machine (creates GitHub OIDC + repo variables):
+#   azd pipeline config
+name: Deploy Azure
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install azd
+        uses: Azure/setup-azd@v2
+
+      - name: Log in with Azure (Federated Credentials)
+        run: |
+          azd auth login \
+            --client-id "$AZURE_CLIENT_ID" \
+            --federated-credential-provider "github" \
+            --tenant-id "$AZURE_TENANT_ID"
+
+      - name: Provision Infrastructure
+        run: azd provision --no-prompt
+
+      - name: Point SPA at the API
+        shell: pwsh
+        run: |
+          $apiUri = azd env get-value API_URI
+          if ($apiUri) {
+            Set-Content -Path web/.env.production -Value "VITE_API_URL=$apiUri"
+          }
+
+      - name: Deploy Application
+        run: azd deploy --no-prompt
