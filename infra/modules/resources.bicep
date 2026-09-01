@@ -15,7 +15,7 @@ param databasePassword string
 @secure()
 param jwtSigningKey string
 
-var deployerPrincipalType = empty(principalType) ? 'User' : principalType
+var deployerPrincipalType = empty(principalType) ? 'ServicePrincipal' : principalType
 
 // Key Vault: 3-24 chars, alphanumeric + hyphen
 var keyVaultName = take(toLower('kv${replace(name, '-', '')}${resourceSuffix}'), 24)

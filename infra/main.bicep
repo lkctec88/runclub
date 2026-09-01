@@ -19,7 +19,7 @@ param postgresLocation string = 'uksouth'
 param principalId string = ''
 
 @description('Principal type of the deployer (User or ServicePrincipal)')
-param principalType string = 'User'
+param principalType string = 'ServicePrincipal'
 
 @secure()
 @description('PostgreSQL administrator password')

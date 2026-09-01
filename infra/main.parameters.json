@@ -17,6 +17,9 @@
     "principalId": {
       "value": "${AZURE_PRINCIPAL_ID}"
     },
+    "principalType": {
+      "value": "ServicePrincipal"
+    },
     "databasePassword": {
       "value": "$(secretOrRandomPassword ${AZURE_KEY_VAULT_NAME} database-password)"
     },
