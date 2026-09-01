@@ -113,7 +113,7 @@ resource kvDeployerSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
-      'b86a8fe4-44ce-4948-aee5-acbb2c7e848d'
+      'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
     )
     principalId: principalId
     principalType: deployerPrincipalType
