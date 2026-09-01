@@ -12,6 +12,9 @@ param location string
 @description('Region for Azure Static Web Apps (not available in uksouth)')
 param staticWebAppLocation string = 'eastus2'
 
+@description('Region for PostgreSQL Flexible Server (blocked for new servers in some US/EU regions)')
+param postgresLocation string = 'uksouth'
+
 @description('Id of the principal to grant Key Vault secret access')
 param principalId string = ''
 
@@ -44,6 +47,7 @@ module resources './modules/resources.bicep' = {
     name: environmentName
     location: location
     staticWebAppLocation: staticWebAppLocation
+    postgresLocation: postgresLocation
     tags: tags
     resourceSuffix: resourceSuffix
     principalId: principalId

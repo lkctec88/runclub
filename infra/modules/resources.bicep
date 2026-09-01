@@ -3,6 +3,7 @@ targetScope = 'resourceGroup'
 param name string
 param location string
 param staticWebAppLocation string
+param postgresLocation string
 param tags object
 param resourceSuffix string
 param principalId string
@@ -121,7 +122,7 @@ resource kvDeployerSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-
 
 resource postgres 'Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01' = {
   name: postgresName
-  location: location
+  location: postgresLocation
   tags: tags
   sku: {
     name: 'Standard_B1ms'

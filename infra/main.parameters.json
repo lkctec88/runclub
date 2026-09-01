@@ -11,6 +11,9 @@
     "staticWebAppLocation": {
       "value": "${AZURE_LOCATION}"
     },
+    "postgresLocation": {
+      "value": "uksouth"
+    },
     "principalId": {
       "value": "${AZURE_PRINCIPAL_ID}"
     },
