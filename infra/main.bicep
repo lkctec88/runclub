@@ -10,7 +10,7 @@ param environmentName string
 param location string
 
 @description('Region for Azure Static Web Apps (not available in uksouth)')
-param staticWebAppLocation string = 'westeurope'
+param staticWebAppLocation string = 'eastus2'
 
 @description('Id of the principal to grant Key Vault secret access')
 param principalId string = ''
