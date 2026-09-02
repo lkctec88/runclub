@@ -230,7 +230,7 @@ public static class SeedData
                 StartsAtUtc = DateTime.UtcNow.Date.AddDays(2).AddHours(19),
                 MeetingPoint = "Clubhouse",
                 Location = "Holme Pierrepont National Watersports Centre",
-                DistanceMiles = 5,
+                DistanceMiles = "5",
                 PaceGroups = "Mixed",
                 RunLeaderUserId = admin.Id,
                 VolunteerSlots =
@@ -255,7 +255,7 @@ public static class SeedData
                 StartsAtUtc = DateTime.UtcNow.Date.AddDays(1).AddHours(18),
                 MeetingPoint = "Park Hill",
                 Location = "Holme Pierrepont, Nottingham",
-                DistanceMiles = 4,
+                DistanceMiles = "4",
                 TargetPaceOrEffort = "Hard effort"
             });
 
@@ -269,7 +269,7 @@ public static class SeedData
                 StartsAtUtc = new DateTime(2026, 9, 2, 18, 0, 0, DateTimeKind.Utc),
                 MeetingPoint = "Black Rocks car park",
                 Location = "Black Rocks, Peak District",
-                DistanceMiles = 5.5,
+                DistanceMiles = "5.5",
                 RunType = "Fell race",
                 VolunteerSlots =
                 [
@@ -288,7 +288,7 @@ public static class SeedData
                 StartsAtUtc = DateTime.UtcNow.Date.AddDays(-4).AddHours(9),
                 MeetingPoint = "Clubhouse",
                 Location = "Holme Pierrepont National Watersports Centre",
-                DistanceMiles = 4,
+                DistanceMiles = "4",
                 PaceGroups = "Mixed"
             };
             db.Activities.Add(pastRun);
@@ -358,7 +358,7 @@ public static class SeedData
                         StartsAtUtc = new DateTime(2026, 9, 2, 18, 0, 0, DateTimeKind.Utc),
                         MeetingPoint = "Black Rocks car park",
                         Location = "Black Rocks, Peak District",
-                        DistanceMiles = 5.5,
+                        DistanceMiles = "5.5",
                         RunType = "Fell race",
                         VolunteerSlots =
                         [
@@ -403,7 +403,7 @@ public static class SeedData
                             StartsAtUtc = DateTime.UtcNow.Date.AddDays(-4).AddHours(9),
                             MeetingPoint = "Clubhouse",
                             Location = "Holme Pierrepont National Watersports Centre",
-                            DistanceMiles = 4,
+                            DistanceMiles = "4",
                             PaceGroups = "Mixed"
                         };
                         db.Activities.Add(pastRun);
@@ -499,12 +499,12 @@ public static class SeedData
 
     private static async Task EnsurePastTestActivitiesAsync(AppDbContext db, Guid clubId, string createdByUserId)
     {
-        var samples = new (string Title, string Description, int DaysAgo, double Miles, string MeetingPoint, bool Training)[]
+        var samples = new (string Title, string Description, int DaysAgo, string Miles, string MeetingPoint, bool Training)[]
         {
-            ("Thursday tempo", "Steady tempo around the lake", 7, 6, "Clubhouse", true),
-            ("Saturday long run", "Easy long run along the canal", 10, 10, "Trent Basin", false),
-            ("Track Tuesday", "Intervals at Harvey Hadden", 14, 5, "Harvey Hadden stadium", true),
-            ("Monday recovery jog", "Very easy shakeout with coffee after", 18, 3, "Clubhouse", false)
+            ("Thursday tempo", "Steady tempo around the lake", 7, "6", "Clubhouse", true),
+            ("Saturday long run", "Easy long run along the canal", 10, "10", "Trent Basin", false),
+            ("Track Tuesday", "Intervals at Harvey Hadden", 14, "5", "Harvey Hadden stadium", true),
+            ("Monday recovery jog", "Very easy shakeout with coffee after", 18, "3", "Clubhouse", false)
         };
 
         var memberIds = await db.ClubMemberships

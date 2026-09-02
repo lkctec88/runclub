@@ -35,7 +35,7 @@ public class ActivitiesController : ControllerBase
         string? MeetingPoint,
         string? Location,
         string? Route,
-        double? DistanceMiles,
+        string? DistanceMiles,
         string? PaceGroups,
         string? RunType,
         string? RunLeaderUserId,
@@ -596,7 +596,7 @@ public class ActivitiesController : ControllerBase
         activity.MeetingPoint = dto.MeetingPoint;
         activity.Location = dto.Location;
         activity.Route = dto.Route;
-        activity.DistanceMiles = dto.DistanceMiles;
+        activity.DistanceMiles = string.IsNullOrWhiteSpace(dto.DistanceMiles) ? null : dto.DistanceMiles.Trim();
         activity.PaceGroups = dto.PaceGroups;
         activity.RunType = dto.RunType;
         activity.RunLeaderUserId = dto.RunLeaderUserId;

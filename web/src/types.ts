@@ -148,7 +148,7 @@ export interface ActivitySummary {
   meetingPoint?: string
   location?: string
   route?: string
-  distanceMiles?: number
+  distanceMiles?: string
   paceGroups?: string
   runType?: string
   maxCapacity?: number
@@ -204,7 +204,7 @@ export interface CalendarItem {
   startsAtUtc: string
   meetingPoint?: string
   location?: string
-  distanceMiles?: number
+  distanceMiles?: string
   paceGroups?: string
   virtualParticipationEnabled: boolean
   goingCount: number
@@ -242,7 +242,7 @@ export interface ContributionActivity {
   startsAtUtc: string
   meetingPoint?: string
   location?: string
-  distanceMiles?: number
+  distanceMiles?: string
   paceGroups?: string
 }
 

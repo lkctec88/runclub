@@ -10,6 +10,7 @@
   --text-dark: #001b44;
   --border: #e2e8f0;
   --success: #059669;
+  --blue: #1d4ed8;
 
   --sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-family: var(--sans);
@@ -267,8 +268,8 @@ textarea {
 }
 
 .badge-tag {
-  background: rgba(0, 27, 68, 0.08);
-  color: var(--navy);
+  background: rgba(29, 78, 216, 0.14);
+  color: var(--blue);
   text-transform: none;
   letter-spacing: 0;
 }
@@ -277,8 +278,8 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  background: rgba(0, 27, 68, 0.08);
-  color: var(--navy);
+  background: rgba(29, 78, 216, 0.14);
+  color: var(--blue);
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.15rem 0.55rem;
@@ -730,6 +731,19 @@ textarea {
   background: var(--white);
 }
 
+.form-datetime {
+  display: grid;
+  grid-template-columns: 1fr 5.25rem auto 5.25rem;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.form-datetime-sep {
+  text-align: center;
+  font-weight: 700;
+  color: var(--navy);
+}
+
 .password-field {
   position: relative;
 }
@@ -952,11 +966,18 @@ textarea {
   margin-bottom: 1rem;
 }
 
+.member-status-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-top: 0.65rem;
+}
+
 .member-active-toggle {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.65rem;
+  margin-top: 0;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--navy);
@@ -966,6 +987,11 @@ textarea {
   width: 1.15rem;
   height: 1.15rem;
   accent-color: var(--navy);
+}
+
+.member-active-toggle input:disabled {
+  opacity: 1;
+  cursor: default;
 }
 
 .card--lapsed {

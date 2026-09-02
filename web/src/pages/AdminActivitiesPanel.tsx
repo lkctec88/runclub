@@ -47,11 +47,32 @@ function newNeedRow(createType: boolean): NeedRow {
   }
 }
 
-function toDatetimeLocalValue(iso: string) {
+const START_HOURS = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'))
+const START_MINUTES = ['00', '15', '30', '45'] as const
+
+function pad2(value: number) {
+  return String(value).padStart(2, '0')
+}
+
+function splitLocalDateTime(iso: string) {
   const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return ''
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-  return local.toISOString().slice(0, 16)
+  if (Number.isNaN(date.getTime())) return { date: '', hour: '19', minute: '00' }
+  let hour = date.getHours()
+  let minute = Math.round(date.getMinutes() / 15) * 15
+  if (minute === 60) {
+    minute = 0
+    hour = (hour + 1) % 24
+  }
+  return {
+    date: `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`,
+    hour: pad2(hour),
+    minute: pad2(minute),
+  }
+}
+
+function combineLocalDateTime(date: string, hour: string, minute: string) {
+  if (!date) return ''
+  return new Date(`${date}T${hour}:${minute}:00`).toISOString()
 }
 
 function formKindFromActivity(activity: ActivitySummary): FormKind {
@@ -154,6 +175,7 @@ function matchesActivitySearch(query: string, activity: ActivitySummary) {
     activity.paceGroups,
     activityKindLabel(activity.kind),
     activity.isTrainingSession ? 'training' : '',
+    activity.distanceMiles,
     formatWhen(activity.startsAtUtc),
     ...(activity.tags ?? []),
   ]
@@ -311,10 +333,13 @@ function ActivityForm({
   const [activityType, setActivityType] = useState<FormKind>(existing ? formKindFromActivity(existing) : 'clubrun')
   const [title, setTitle] = useState(existing?.title ?? '')
   const [description, setDescription] = useState(existing?.description ?? '')
-  const [startsAt, setStartsAt] = useState(existing ? toDatetimeLocalValue(existing.startsAtUtc) : '')
+  const initialWhen = existing ? splitLocalDateTime(existing.startsAtUtc) : { date: '', hour: '19', minute: '00' }
+  const [startDate, setStartDate] = useState(initialWhen.date)
+  const [startHour, setStartHour] = useState(initialWhen.hour)
+  const [startMinute, setStartMinute] = useState(initialWhen.minute)
   const [location, setLocation] = useState(existing?.location ?? '')
   const [meetingPoint, setMeetingPoint] = useState(existing?.meetingPoint ?? '')
-  const [distanceMiles, setDistanceMiles] = useState(existing?.distanceMiles?.toString() ?? '')
+  const [distanceMiles, setDistanceMiles] = useState(existing?.distanceMiles ?? '')
   const [paceGroups, setPaceGroups] = useState(existing?.paceGroups ?? '')
   const [repeat, setRepeat] = useState<'none' | 'weekly' | 'monthly'>('none')
   const [repeatUntil, setRepeatUntil] = useState('')
@@ -377,10 +402,10 @@ function ActivityForm({
       kind: activityType === 'race' ? ActivityKind.Race : ActivityKind.ClubActivity,
       title,
       description: description || null,
-      startsAtUtc: new Date(startsAt).toISOString(),
+      startsAtUtc: combineLocalDateTime(startDate, startHour, startMinute),
       location: location || null,
       meetingPoint: meetingPoint || null,
-      distanceMiles: distanceMiles ? Number(distanceMiles) : null,
+      distanceMiles: distanceMiles.trim() || null,
       paceGroups: paceGroups || null,
       isTrainingSession: isTraining,
       sessionType: isTraining ? sessionType : null,
@@ -602,8 +627,43 @@ function ActivityForm({
         </div>
       </div>
       <div className="form-group">
-        <label htmlFor="sa-when">Date and time</label>
-        <input id="sa-when" type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} required />
+        <label htmlFor="sa-date">Date and time</label>
+        <div className="form-datetime">
+          <input
+            id="sa-date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+          />
+          <select
+            id="sa-hour"
+            aria-label="Hour"
+            value={startHour}
+            onChange={(e) => setStartHour(e.target.value)}
+          >
+            {START_HOURS.map((hour) => (
+              <option key={hour} value={hour}>
+                {hour}
+              </option>
+            ))}
+          </select>
+          <span className="form-datetime-sep" aria-hidden="true">
+            :
+          </span>
+          <select
+            id="sa-minute"
+            aria-label="Minutes"
+            value={startMinute}
+            onChange={(e) => setStartMinute(e.target.value)}
+          >
+            {START_MINUTES.map((minute) => (
+              <option key={minute} value={minute}>
+                {minute}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       {canRepeat && (
         <>
@@ -626,7 +686,7 @@ function ActivityForm({
                 id="sa-repeat-until"
                 type="date"
                 value={repeatUntil}
-                min={startsAt ? startsAt.slice(0, 10) : undefined}
+                min={startDate || undefined}
                 onChange={(e) => setRepeatUntil(e.target.value)}
               />
               <p className="activity-meta">
@@ -650,11 +710,10 @@ function ActivityForm({
         <label htmlFor="sa-distance">Distance (miles)</label>
         <input
           id="sa-distance"
-          type="number"
-          min="0"
-          step="0.1"
           value={distanceMiles}
           onChange={(e) => setDistanceMiles(e.target.value)}
+          maxLength={40}
+          placeholder="e.g. 5 or 4-8"
         />
       </div>
       {activityType !== 'training' && (

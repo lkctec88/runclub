@@ -108,6 +108,30 @@ function PaginationBar({
   )
 }
 
+function PersonStatusToggles({
+  isActive,
+  registered,
+  onActiveChange,
+}: {
+  isActive: boolean
+  registered: boolean
+  onActiveChange: (next: boolean) => void
+}) {
+  return (
+    <div className="member-status-toggles">
+      <label className="member-active-toggle">
+        <input type="checkbox" checked={isActive} onChange={(e) => onActiveChange(e.target.checked)} />
+        Active
+        {!isActive && <span className="badge badge-race">Lapsed</span>}
+      </label>
+      <label className="member-active-toggle">
+        <input type="checkbox" checked={registered} disabled />
+        Registered
+      </label>
+    </div>
+  )
+}
+
 function PeoplePanel({ clubId }: { clubId: string }) {
   const [members, setMembers] = useState<ClubMember[]>([])
   const [validateMembers, setValidateMembers] = useState<ValidateMember[]>([])
@@ -370,15 +394,11 @@ function PeoplePanel({ clubId }: { clubId: string }) {
                 <span className={`badge ${roleBadgeClass(row.role)}`}>{clubRoleLabel(row.role)}</span>
               </div>
               <p className="activity-meta">EA number: {row.englandAthleticsNumber}</p>
-              <label className="member-active-toggle">
-                <input
-                  type="checkbox"
-                  checked={row.isActive}
-                  onChange={(e) => void togglePending(row, e.target.checked)}
-                />
-                Active
-                {!row.isActive && <span className="badge badge-race">Lapsed</span>}
-              </label>
+              <PersonStatusToggles
+                isActive={row.isActive}
+                registered={false}
+                onActiveChange={(next) => void togglePending(row, next)}
+              />
             </div>
           ))}
           <PaginationBar
@@ -407,15 +427,11 @@ function PeoplePanel({ clubId }: { clubId: string }) {
             </div>
             {member.email && <p className="activity-meta">{member.email}</p>}
             {member.englandAthleticsNumber && <p className="activity-meta">EA number: {member.englandAthleticsNumber}</p>}
-            <label className="member-active-toggle">
-              <input
-                type="checkbox"
-                checked={member.isActive}
-                onChange={(e) => void toggleMember(member, e.target.checked)}
-              />
-              Active
-              {!member.isActive && <span className="badge badge-race">Lapsed</span>}
-            </label>
+            <PersonStatusToggles
+              isActive={member.isActive}
+              registered={true}
+              onActiveChange={(next) => void toggleMember(member, next)}
+            />
             <div className="admin-row-actions">
               <select
                 id={`role-${member.id}`}

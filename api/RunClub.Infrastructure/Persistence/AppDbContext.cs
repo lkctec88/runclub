@@ -87,6 +87,10 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasIndex(a => a.RecurrenceGroupId);
 
         builder.Entity<Activity>()
+            .Property(a => a.DistanceMiles)
+            .HasMaxLength(40);
+
+        builder.Entity<Activity>()
             .HasMany(r => r.VolunteerSlots)
             .WithOne(s => s.Activity)
             .HasForeignKey(s => s.ActivityId)

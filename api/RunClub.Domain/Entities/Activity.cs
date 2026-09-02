@@ -13,7 +13,7 @@ public class Activity
     public string? MeetingPoint { get; set; }
     public string? Location { get; set; }
     public string? Route { get; set; }
-    public double? DistanceMiles { get; set; }
+    public string? DistanceMiles { get; set; }
     public string? PaceGroups { get; set; }
     public string? RunType { get; set; }
     public string? RunLeaderUserId { get; set; }
