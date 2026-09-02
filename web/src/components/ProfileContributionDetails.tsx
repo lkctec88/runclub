@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ActivityCard } from './ActivityCard'
 import { ActivityLocationLink } from './ActivityLocationLink'
 import type { ProfileContributions } from '../types'
-import { contributionRunToSummary, activityKindLabel } from '../types'
+import { contributionRunToSummary, activityKindLabel, volunteerSlotLabel } from '../types'
 import { VolunteerSlotStatus } from '../types'
 
 export type ProfileSection = 'activities' | 'volunteer' | 'led' | 'training'
@@ -67,7 +67,7 @@ export function ProfileContributionDetails({ section, data }: ProfileContributio
         {data.volunteerShifts.map((shift) => (
           <Link key={shift.id} to={`/activities/${shift.activity.id}`} className="card profile-detail-card">
             <div className="volunteer-role-header">
-              <strong>{shift.role}</strong>
+              <strong>{volunteerSlotLabel(shift)}</strong>
               <span className={`badge ${shift.status === VolunteerSlotStatus.Completed ? 'badge-training' : 'badge-race'}`}>
                 {shift.status === VolunteerSlotStatus.Completed ? 'Completed' : 'Signed up'}
               </span>

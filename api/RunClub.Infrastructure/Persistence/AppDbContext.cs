@@ -15,7 +15,9 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<MemberProfile> MemberProfiles => Set<MemberProfile>();
     public DbSet<TrainingGoal> TrainingGoals => Set<TrainingGoal>();
     public DbSet<Activity> Activities => Set<Activity>();
+    public DbSet<ActivityTag> ActivityTags => Set<ActivityTag>();
     public DbSet<VolunteerSlot> VolunteerSlots => Set<VolunteerSlot>();
+    public DbSet<VolunteerRoleType> VolunteerRoleTypes => Set<VolunteerRoleType>();
     public DbSet<ActivityAttendance> ActivityAttendances => Set<ActivityAttendance>();
     public DbSet<ActivityCheckIn> ActivityCheckIns => Set<ActivityCheckIn>();
     public DbSet<ActivityCheckOut> ActivityCheckOuts => Set<ActivityCheckOut>();
@@ -82,9 +84,41 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .IsUnique();
 
         builder.Entity<Activity>()
+            .HasIndex(a => a.RecurrenceGroupId);
+
+        builder.Entity<Activity>()
             .HasMany(r => r.VolunteerSlots)
             .WithOne(s => s.Activity)
             .HasForeignKey(s => s.ActivityId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Activity>()
+            .HasMany(r => r.Tags)
+            .WithOne(t => t.Activity)
+            .HasForeignKey(t => t.ActivityId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ActivityTag>()
+            .Property(t => t.Id)
+            .ValueGeneratedNever();
+
+        builder.Entity<ActivityTag>()
+            .Property(t => t.Label)
+            .HasMaxLength(40)
+            .IsRequired();
+
+        builder.Entity<ActivityTag>()
+            .HasIndex(t => new { t.ActivityId, t.Label })
+            .IsUnique();
+
+        builder.Entity<VolunteerRoleType>()
+            .HasOne(t => t.Club)
+            .WithMany(c => c.VolunteerRoleTypes)
+            .HasForeignKey(t => t.ClubId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<VolunteerRoleType>()
+            .HasIndex(t => new { t.ClubId, t.Name })
+            .IsUnique();
     }
 }

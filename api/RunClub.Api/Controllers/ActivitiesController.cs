@@ -46,7 +46,13 @@ public class ActivitiesController : ControllerBase
         string? WorkoutInstructions,
         string? TargetPaceOrEffort,
         string? CoachUserId,
-        bool VirtualParticipationEnabled);
+        bool VirtualParticipationEnabled,
+        IReadOnlyList<string>? Tags = null,
+        IReadOnlyList<VolunteerNeedRequest>? VolunteerNeeds = null,
+        RecurrenceFrequency RecurrenceFrequency = RecurrenceFrequency.None,
+        DateTime? RecurrenceUntilUtc = null);
+
+    public record VolunteerNeedRequest(Guid VolunteerRoleTypeId, int Count, string? Tag = null);
 
     [HttpGet]
     public async Task<ActionResult> List([FromQuery] Guid? clubId, [FromQuery] ActivityKind? kind, [FromQuery] bool? trainingOnly)
@@ -92,6 +98,7 @@ public class ActivitiesController : ControllerBase
                 r.TargetPaceOrEffort,
                 r.CoachUserId,
                 r.VirtualParticipationEnabled,
+                Tags = r.Tags.OrderBy(t => t.Label).Select(t => t.Label).ToList(),
                 GoingCount = r.Attendances.Count(a => a.Status == AttendanceStatus.Going),
                 GoingMembers = r.Attendances
                     .Where(a => a.Status == AttendanceStatus.Going)
@@ -113,6 +120,7 @@ public class ActivitiesController : ControllerBase
                     s.Id,
                     s.ActivityId,
                     s.Role,
+                    s.Tag,
                     s.Description,
                     s.Requirements,
                     s.AssignedUserId,
@@ -177,6 +185,7 @@ public class ActivitiesController : ControllerBase
                 r.TargetPaceOrEffort,
                 r.CoachUserId,
                 r.VirtualParticipationEnabled,
+                Tags = r.Tags.OrderBy(t => t.Label).Select(t => t.Label).ToList(),
                 GoingCount = r.Attendances.Count(a => a.Status == AttendanceStatus.Going),
                 GoingMembers = r.Attendances
                     .Where(a => a.Status == AttendanceStatus.Going)
@@ -198,6 +207,7 @@ public class ActivitiesController : ControllerBase
                     s.Id,
                     s.ActivityId,
                     s.Role,
+                    s.Tag,
                     s.Description,
                     s.Requirements,
                     s.AssignedUserId,
@@ -265,16 +275,37 @@ public class ActivitiesController : ControllerBase
         if (dto.IsTrainingSession && dto.Kind != ActivityKind.ClubActivity)
             return BadRequest("Only club activities can be training sessions");
 
-        var activity = MapNew(dto);
-        _db.Activities.Add(activity);
+        var frequency = ActivitySchedule.CanRecur(dto.Kind) ? dto.RecurrenceFrequency : RecurrenceFrequency.None;
+        if (frequency is RecurrenceFrequency.Weekly or RecurrenceFrequency.Monthly
+            && dto.RecurrenceUntilUtc is { } until
+            && until < dto.StartsAtUtc)
+            return BadRequest("Repeat end date must be on or after the first date");
+
+        var starts = ActivitySchedule.OccurrenceStarts(dto.StartsAtUtc, frequency, dto.RecurrenceUntilUtc);
+        var groupId = starts.Count > 1 ? Guid.NewGuid() : (Guid?)null;
+        var storedFrequency = starts.Count > 1 ? frequency : RecurrenceFrequency.None;
+        var storedUntil = storedFrequency == RecurrenceFrequency.None ? null : dto.RecurrenceUntilUtc;
+
+        Activity? first = null;
+        foreach (var start in starts)
+        {
+            var activity = MapNew(dto, start, groupId, storedFrequency, storedUntil);
+            foreach (var label in NormalizeTags(dto.Tags))
+                activity.Tags.Add(new ActivityTag { Label = label });
+            _db.Activities.Add(activity);
+            var volunteerError = await AddVolunteerNeedsAsync(activity, dto);
+            if (volunteerError is not null) return BadRequest(volunteerError);
+            first ??= activity;
+        }
+
         await _db.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = activity.Id }, activity);
+        return CreatedAtAction(nameof(Get), new { id = first!.Id }, first);
     }
 
     [HttpPut("{id:guid}")]
     public async Task<ActionResult> Update(Guid id, ActivityDto dto)
     {
-        var activity = await _db.Activities.FindAsync(id);
+        var activity = await _db.Activities.FirstOrDefaultAsync(a => a.Id == id);
         if (activity is null || !activity.IsActive) return NotFound();
 
         if (activity.Kind == ActivityKind.PersonalActivity)
@@ -286,7 +317,13 @@ public class ActivitiesController : ControllerBase
             await _auth.EnsureClubAdminAsync(UserId, activity.ClubId.Value);
         }
 
+        if (activity.Kind != ActivityKind.PersonalActivity && activity.StartsAtUtc < DateTime.UtcNow)
+            return BadRequest("Past activities cannot be edited");
+
         Apply(activity, dto);
+        await ReplaceTagsAsync(activity.Id, dto.Tags);
+        var volunteerError = await AddVolunteerNeedsAsync(activity, dto);
+        if (volunteerError is not null) return BadRequest(volunteerError);
         await _db.SaveChangesAsync();
         return Ok(activity);
     }
@@ -526,10 +563,25 @@ public class ActivitiesController : ControllerBase
         return activity;
     }
 
-    private Activity MapNew(ActivityDto dto)
+    private Activity MapNew(
+        ActivityDto dto,
+        DateTime? startsAtUtc = null,
+        Guid? recurrenceGroupId = null,
+        RecurrenceFrequency recurrenceFrequency = RecurrenceFrequency.None,
+        DateTime? recurrenceUntilUtc = null)
     {
         var activity = new Activity { CreatedByUserId = UserId };
         Apply(activity, dto);
+        if (startsAtUtc.HasValue)
+        {
+            activity.StartsAtUtc = startsAtUtc.Value;
+            if (dto.EndsAtUtc.HasValue)
+                activity.EndsAtUtc = startsAtUtc.Value + (dto.EndsAtUtc.Value - dto.StartsAtUtc);
+        }
+
+        activity.RecurrenceGroupId = recurrenceGroupId;
+        activity.RecurrenceFrequency = recurrenceFrequency;
+        activity.RecurrenceUntilUtc = recurrenceUntilUtc;
         return activity;
     }
 
@@ -539,8 +591,8 @@ public class ActivitiesController : ControllerBase
         activity.Kind = dto.Kind;
         activity.Title = dto.Title;
         activity.Description = dto.Description;
-        activity.StartsAtUtc = dto.StartsAtUtc;
-        activity.EndsAtUtc = dto.EndsAtUtc;
+        activity.StartsAtUtc = AsUtc(dto.StartsAtUtc);
+        activity.EndsAtUtc = AsUtc(dto.EndsAtUtc);
         activity.MeetingPoint = dto.MeetingPoint;
         activity.Location = dto.Location;
         activity.Route = dto.Route;
@@ -556,5 +608,83 @@ public class ActivitiesController : ControllerBase
         activity.TargetPaceOrEffort = activity.IsTrainingSession ? dto.TargetPaceOrEffort : null;
         activity.CoachUserId = activity.IsTrainingSession ? dto.CoachUserId : null;
         activity.VirtualParticipationEnabled = activity.IsTrainingSession && dto.VirtualParticipationEnabled;
+    }
+
+    private static DateTime AsUtc(DateTime value)
+        => value.Kind == DateTimeKind.Utc ? value : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+
+    private static DateTime? AsUtc(DateTime? value)
+        => value is { } date ? AsUtc(date) : null;
+
+    private static List<string> NormalizeTags(IReadOnlyList<string>? tags)
+    {
+        var labels = new List<string>();
+        if (tags is null) return labels;
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var raw in tags)
+        {
+            var label = raw?.Trim();
+            if (string.IsNullOrWhiteSpace(label)) continue;
+            if (label.Length > 40) label = label[..40];
+            if (!seen.Add(label)) continue;
+            labels.Add(label);
+            if (labels.Count == 12) break;
+        }
+        return labels;
+    }
+
+    private async Task ReplaceTagsAsync(Guid activityId, IReadOnlyList<string>? tags)
+    {
+        if (tags is null) return;
+
+        var labels = NormalizeTags(tags);
+        var existing = await _db.ActivityTags.Where(t => t.ActivityId == activityId).ToListAsync();
+        if (existing.Count > 0)
+            _db.ActivityTags.RemoveRange(existing);
+
+        foreach (var label in labels)
+        {
+            var tag = new ActivityTag
+            {
+                Id = Guid.NewGuid(),
+                ActivityId = activityId,
+                Label = label
+            };
+            _db.Entry(tag).State = EntityState.Added;
+        }
+    }
+
+    private async Task<string?> AddVolunteerNeedsAsync(Activity activity, ActivityDto dto)
+    {
+        if (dto.VolunteerNeeds is not { Count: > 0 }) return null;
+        if (activity.Kind is not (ActivityKind.ClubActivity or ActivityKind.Race) || !activity.ClubId.HasValue)
+            return "Volunteer slots only on club activities and races";
+
+        var typeIds = dto.VolunteerNeeds.Select(n => n.VolunteerRoleTypeId).Distinct().ToList();
+        var types = await _db.VolunteerRoleTypes
+            .Where(t => t.ClubId == activity.ClubId && t.IsActive && typeIds.Contains(t.Id))
+            .ToDictionaryAsync(t => t.Id);
+
+        foreach (var need in dto.VolunteerNeeds)
+        {
+            if (need.Count < 1) continue;
+            if (need.Count > 20) return "At most 20 volunteers per type";
+            if (!types.TryGetValue(need.VolunteerRoleTypeId, out var roleType))
+                return "Unknown or inactive volunteer type";
+
+            var tag = string.IsNullOrWhiteSpace(need.Tag) ? null : need.Tag.Trim();
+            for (var i = 0; i < need.Count; i++)
+            {
+                _db.VolunteerSlots.Add(new VolunteerSlot
+                {
+                    ActivityId = activity.Id,
+                    Role = roleType.Name,
+                    Tag = tag,
+                    Description = roleType.Description
+                });
+            }
+        }
+
+        return null;
     }
 }

@@ -89,7 +89,11 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
+    var applyMigrations = app.Configuration.GetValue("Database:ApplyMigrations", true);
+    if (applyMigrations)
+    {
+        await db.Database.MigrateAsync();
+    }
     var seedEnabled = app.Configuration.GetValue<bool>("Seed:Enabled", app.Environment.IsDevelopment());
     if (seedEnabled)
     {
@@ -214,6 +218,8 @@ public static class SeedData
                 Role = ClubRole.Member
             });
 
+            AddDefaultVolunteerRoleTypes(db, club.Id);
+
             db.Activities.Add(new Activity
             {
                 Kind = ActivityKind.ClubActivity,
@@ -230,6 +236,7 @@ public static class SeedData
                 VolunteerSlots =
                 [
                     new VolunteerSlot { Role = "Timekeeper", Description = "Record finish times at the clubhouse" },
+                    new VolunteerSlot { Role = "Run lead", Tag = "8:30min/mi", Description = "Lead the 8:30 pace group" },
                     new VolunteerSlot { Role = "Tail runner", Description = "Activity at the back of the group" },
                     new VolunteerSlot { Role = "Setup", Description = "Help set up the start area" }
                 ]
@@ -355,7 +362,7 @@ public static class SeedData
                         RunType = "Fell race",
                         VolunteerSlots =
                         [
-                            new VolunteerSlot { Role = "Marshal", Description = "Station at a key point on the course" },
+                            new VolunteerSlot { Role = "Marshal", Tag = "marshall point 4", Description = "Station at a key point on the course" },
                             new VolunteerSlot { Role = "Registration", Description = "Sign runners in before the start" }
                         ]
                     });
@@ -462,10 +469,32 @@ public static class SeedData
                         .FirstOrDefaultAsync();
                 if (createdBy is not null)
                     await EnsurePastTestActivitiesAsync(db, hprc.Id, createdBy);
+
+                await EnsureDefaultVolunteerRoleTypesAsync(db, hprc.Id);
             }
 
             await db.SaveChangesAsync();
         }
+    }
+
+    private static void AddDefaultVolunteerRoleTypes(AppDbContext db, Guid clubId)
+    {
+        foreach (var (name, description) in VolunteerRoleCatalog.Defaults)
+        {
+            db.VolunteerRoleTypes.Add(new VolunteerRoleType
+            {
+                ClubId = clubId,
+                Name = name,
+                Description = description
+            });
+        }
+    }
+
+    private static async Task EnsureDefaultVolunteerRoleTypesAsync(AppDbContext db, Guid clubId)
+    {
+        if (await db.VolunteerRoleTypes.AnyAsync(t => t.ClubId == clubId))
+            return;
+        AddDefaultVolunteerRoleTypes(db, clubId);
     }
 
     private static async Task EnsurePastTestActivitiesAsync(AppDbContext db, Guid clubId, string createdByUserId)

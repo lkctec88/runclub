@@ -46,10 +46,11 @@ function startOfLocalDay(value: Date) {
 }
 
 export function isPastActivity(activity: { startsAtUtc: string }) {
-  return startOfLocalDay(new Date(activity.startsAtUtc)) < startOfLocalDay(new Date())
+  return new Date(activity.startsAtUtc).getTime() < Date.now()
 }
 
 export function isCurrentActivity(activity: { startsAtUtc: string }) {
+  if (isPastActivity(activity)) return false
   const startDay = startOfLocalDay(new Date(activity.startsAtUtc))
   const today = new Date()
   const firstDay = startOfLocalDay(today)

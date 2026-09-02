@@ -50,6 +50,7 @@ public class ProfilesCalendarChatController : ControllerBase
             {
                 slot.Id,
                 slot.Role,
+                slot.Tag,
                 slot.Description,
                 slot.Status,
                 Activity = new
@@ -403,11 +404,13 @@ public class ProfilesCalendarChatController : ControllerBase
                 r.DistanceMiles,
                 r.PaceGroups,
                 r.VirtualParticipationEnabled,
+                Tags = r.Tags.OrderBy(t => t.Label).Select(t => t.Label).ToList(),
                 GoingCount = r.Attendances.Count(a => a.Status == AttendanceStatus.Going),
                 VolunteerSlots = r.VolunteerSlots.Select(s => new
                 {
                     s.Id,
                     s.Role,
+                    s.Tag,
                     s.Status,
                     s.AssignedUserId
                 }).ToList()

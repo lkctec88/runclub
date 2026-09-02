@@ -25,7 +25,7 @@ public class VolunteerSlotsController : ControllerBase
 
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-    public record SlotRequest(string Role, string? Description, string? Requirements, string? Notes);
+    public record SlotRequest(string Role, string? Tag, string? Description, string? Requirements, string? Notes);
 
     [HttpGet]
     public async Task<ActionResult> List(Guid activityId)
@@ -42,6 +42,7 @@ public class VolunteerSlotsController : ControllerBase
                 s.Id,
                 s.ActivityId,
                 s.Role,
+                s.Tag,
                 s.Description,
                 s.Requirements,
                 s.AssignedUserId,
@@ -64,6 +65,7 @@ public class VolunteerSlotsController : ControllerBase
         {
             ActivityId = activityId,
             Role = req.Role,
+            Tag = string.IsNullOrWhiteSpace(req.Tag) ? null : req.Tag.Trim(),
             Description = req.Description,
             Requirements = req.Requirements,
             Notes = req.Notes
@@ -156,6 +158,7 @@ public class VolunteerSlotsController : ControllerBase
         s.Id,
         s.ActivityId,
         s.Role,
+        s.Tag,
         s.Description,
         s.Requirements,
         s.AssignedUserId,

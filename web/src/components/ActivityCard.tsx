@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import type { ActivitySummary } from '../types'
 import { activityKindLabel } from '../types'
 import { ActivityLocationLink } from './ActivityLocationLink'
+import { ActivityTagList } from './ActivityTagList'
 import { VolunteerRoles } from './VolunteerRoles'
 import { DidYouGoPrompt } from './DidYouGoPrompt'
 import { GoingRsvp } from './GoingRsvp'
@@ -40,6 +41,7 @@ export function ActivityCard({
           {activityKindLabel(activity.kind)}
         </span>
         {activity.isTrainingSession && <span className="badge badge-training">Training</span>}
+        <ActivityTagList tags={activity.tags} />
       </div>
       <h3>{activity.title}</h3>
       <p className="activity-meta">

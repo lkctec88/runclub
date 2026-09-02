@@ -28,7 +28,7 @@ export function ActivitiesPage() {
     .filter(isCurrentActivity)
     .slice()
     .sort((a, b) => new Date(a.startsAtUtc).getTime() - new Date(b.startsAtUtc).getTime())
-  const pendingConfirm = current.filter(needsAttendanceConfirm)
+  const pendingConfirm = activities.filter(needsAttendanceConfirm)
   const restCurrent = current.filter((activity) => !needsAttendanceConfirm(activity))
   const past = activities
     .filter(isPastActivity)

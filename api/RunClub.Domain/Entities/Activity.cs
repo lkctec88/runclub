@@ -25,10 +25,14 @@ public class Activity
     public string? TargetPaceOrEffort { get; set; }
     public string? CoachUserId { get; set; }
     public bool VirtualParticipationEnabled { get; set; }
+    public Guid? RecurrenceGroupId { get; set; }
+    public RecurrenceFrequency RecurrenceFrequency { get; set; }
+    public DateTime? RecurrenceUntilUtc { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public Club? Club { get; set; }
+    public ICollection<ActivityTag> Tags { get; set; } = new List<ActivityTag>();
     public ICollection<VolunteerSlot> VolunteerSlots { get; set; } = new List<VolunteerSlot>();
     public ICollection<ActivityAttendance> Attendances { get; set; } = new List<ActivityAttendance>();
     public ICollection<ActivityCheckIn> CheckIns { get; set; } = new List<ActivityCheckIn>();

@@ -15,4 +15,5 @@ public class Club
     public ICollection<Activity> Activities { get; set; } = new List<Activity>();
     public ICollection<TrainingGroup> TrainingGroups { get; set; } = new List<TrainingGroup>();
     public ICollection<ChatMessage> ChatMessages { get; set; } = new List<ChatMessage>();
+    public ICollection<VolunteerRoleType> VolunteerRoleTypes { get; set; } = new List<VolunteerRoleType>();
 }

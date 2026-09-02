@@ -49,3 +49,10 @@ public enum TrainingSessionType
     SpeedWork = 4,
     Other = 5
 }
+
+public enum RecurrenceFrequency
+{
+    None = 0,
+    Weekly = 1,
+    Monthly = 2
+}

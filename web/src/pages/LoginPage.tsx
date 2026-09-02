@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { IconEye, IconEyeOff } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthContext'
 import { ApiError } from '../api/client'
 import { DEFAULT_CLUB_LOGO } from '../branding'
@@ -95,7 +96,11 @@ export function LoginPage() {
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 aria-pressed={showPassword}
               >
-                <i className={showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'} aria-hidden="true" />
+                {showPassword ? (
+                  <IconEyeOff size={20} stroke={1.8} aria-hidden="true" />
+                ) : (
+                  <IconEye size={20} stroke={1.8} aria-hidden="true" />
+                )}
               </button>
             </div>
           </div>

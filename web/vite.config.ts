@@ -10,4 +10,11 @@ export default defineConfig({
       '/hubs': { target: 'http://localhost:5019', ws: true },
     },
   },
+  preview: {
+    port: 4173,
+    proxy: {
+      '/api': 'http://localhost:5019',
+      '/hubs': { target: 'http://localhost:5019', ws: true },
+    },
+  },
 })

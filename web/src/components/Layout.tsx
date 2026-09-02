@@ -1,13 +1,14 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { IconCalendarEvent, IconRun, IconTargetArrow, IconUser, IconUsers } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthContext'
 import { clubLogoUrl } from '../branding'
 
 const nav = [
-  { to: '/activities', label: 'Activities', icon: '🏃' },
-  { to: '/calendar', label: 'Calendar', icon: '📅' },
-  { to: '/training', label: 'Train', icon: '🎯' },
-  { to: '/community', label: 'Club', icon: '👥' },
-  { to: '/profile', label: 'You', icon: '👤' },
+  { to: '/activities', label: 'Activities', Icon: IconRun },
+  { to: '/calendar', label: 'Calendar', Icon: IconCalendarEvent },
+  { to: '/training', label: 'Train', Icon: IconTargetArrow },
+  { to: '/community', label: 'Club', Icon: IconUsers },
+  { to: '/profile', label: 'You', Icon: IconUser },
 ]
 
 export function Layout() {
@@ -69,7 +70,7 @@ export function Layout() {
             to={item.to}
             className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
           >
-            <span>{item.icon}</span>
+            <item.Icon size={22} stroke={1.75} aria-hidden="true" />
             {item.label}
           </NavLink>
         ))}

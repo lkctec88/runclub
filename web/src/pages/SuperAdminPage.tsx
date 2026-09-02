@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
-import { clubsApi, activitiesApi, volunteerApi } from '../api/services'
+﻿import { useEffect, useMemo, useState } from 'react'
+import { clubsApi } from '../api/services'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
-import { ClubRole, ActivityKind, TrainingSessionType, clubRoleLabel, type ClubMember, type CsvImportResult, type ValidateMember } from '../types'
+import { ClubRole, clubRoleLabel, type ClubMember, type CsvImportResult, type ValidateMember } from '../types'
 import { downloadMembersCsvTemplate } from '../utils/membersCsv'
+import { AdminActivitiesPanel } from './AdminActivitiesPanel'
 
 type Tab = 'people' | 'activities'
 
@@ -13,20 +14,11 @@ function roleBadgeClass(role: ClubRole) {
   return 'badge-clubrun'
 }
 
-const sessionTypes: { value: TrainingSessionType; label: string }[] = [
-  { value: TrainingSessionType.Hills, label: 'Hills' },
-  { value: TrainingSessionType.TrackIntervals, label: 'Track intervals' },
-  { value: TrainingSessionType.Tempo, label: 'Tempo' },
-  { value: TrainingSessionType.Fartlek, label: 'Fartlek' },
-  { value: TrainingSessionType.SpeedWork, label: 'Speed work' },
-  { value: TrainingSessionType.Other, label: 'Other' },
-]
-
 export function SuperAdminPage() {
   const { clubId, clubs, isSuperAdmin } = useAuth()
   const [tab, setTab] = useState<Tab>(isSuperAdmin ? 'people' : 'activities')
 
-  if (!clubId) return <p className="page-loading">Loading…</p>
+  if (!clubId) return <p className="page-loading">Loadingâ€¦</p>
 
   return (
     <div>
@@ -56,7 +48,7 @@ export function SuperAdminPage() {
         </button>
       </div>
 
-      {tab === 'people' && isSuperAdmin ? <PeoplePanel clubId={clubId} /> : <ActivityPanel clubId={clubId} />}
+      {tab === 'people' && isSuperAdmin ? <PeoplePanel clubId={clubId} /> : <AdminActivitiesPanel clubId={clubId} />}
     </div>
   )
 }
@@ -89,7 +81,7 @@ function PaginationBar({
   return (
     <div className="pager">
       <p className="activity-meta">
-        {from}–{to} of {total}
+        {from}â€“{to} of {total}
       </p>
       <div className="pager-actions">
         <button
@@ -285,7 +277,7 @@ function PeoplePanel({ clubId }: { clubId: string }) {
       <div className="card">
         <h2 className="admin-card-title">Upload members by CSV</h2>
         <p className="activity-meta">
-          Tick Active to keep a membership. Untick to lapse it — the person keeps their login and
+          Tick Active to keep a membership. Untick to lapse it â€” the person keeps their login and
           password and can be ticked active again. CSV is optional for larger updates.
         </p>
         <div className="admin-row-actions">
@@ -340,7 +332,7 @@ function PeoplePanel({ clubId }: { clubId: string }) {
         {error && <p className="form-error">{error}</p>}
         {message && <p className="volunteer-message">{message}</p>}
         <button type="submit" className="btn btn-primary" disabled={saving}>
-          {saving ? 'Saving…' : `Add ${clubRoleLabel(role).toLowerCase()}`}
+          {saving ? 'Savingâ€¦' : `Add ${clubRoleLabel(role).toLowerCase()}`}
         </button>
       </form>
 
@@ -448,180 +440,5 @@ function PeoplePanel({ clubId }: { clubId: string }) {
         </>
       )}
     </div>
-  )
-}
-
-function ActivityPanel({ clubId }: { clubId: string }) {
-  const [activityType, setActivityType] = useState<'clubrun' | 'race' | 'training'>('clubrun')
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [startsAt, setStartsAt] = useState('')
-  const [location, setLocation] = useState('')
-  const [meetingPoint, setMeetingPoint] = useState('')
-  const [distanceMiles, setDistanceMiles] = useState('')
-  const [paceGroups, setPaceGroups] = useState('')
-  const [sessionType, setSessionType] = useState<TrainingSessionType>(TrainingSessionType.Hills)
-  const [workoutInstructions, setWorkoutInstructions] = useState('')
-  const [targetPaceOrEffort, setTargetPaceOrEffort] = useState('')
-  const [virtualParticipationEnabled, setVirtualParticipationEnabled] = useState(true)
-  const [volunteerRoles, setVolunteerRoles] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    setError('')
-    setMessage('')
-    try {
-      const isTraining = activityType === 'training'
-      const created = await activitiesApi.create({
-        clubId,
-        kind: activityType === 'race' ? ActivityKind.Race : ActivityKind.ClubActivity,
-        title,
-        description: description || null,
-        startsAtUtc: new Date(startsAt).toISOString(),
-        location: location || null,
-        meetingPoint: meetingPoint || null,
-        distanceMiles: distanceMiles ? Number(distanceMiles) : null,
-        paceGroups: paceGroups || null,
-        isTrainingSession: isTraining,
-        sessionType: isTraining ? sessionType : null,
-        workoutInstructions: isTraining ? workoutInstructions || null : null,
-        targetPaceOrEffort: isTraining ? targetPaceOrEffort || null : null,
-        virtualParticipationEnabled: isTraining && virtualParticipationEnabled,
-      })
-
-      const roles = volunteerRoles
-        .split(',')
-        .map((r) => r.trim())
-        .filter(Boolean)
-      for (const role of roles) {
-        await volunteerApi.create(created.id, { role })
-      }
-
-      setMessage(`${title} created.`)
-      setTitle('')
-      setDescription('')
-      setStartsAt('')
-      setLocation('')
-      setMeetingPoint('')
-      setDistanceMiles('')
-      setPaceGroups('')
-      setWorkoutInstructions('')
-      setTargetPaceOrEffort('')
-      setVolunteerRoles('')
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not create activity')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <form className="card admin-panel" onSubmit={submit}>
-      <h2 className="admin-card-title">Create activity</h2>
-      <div className="form-group">
-        <label htmlFor="sa-type">Type</label>
-        <select id="sa-type" value={activityType} onChange={(e) => setActivityType(e.target.value as typeof activityType)}>
-          <option value="clubrun">Club activity / event</option>
-          <option value="race">Race</option>
-          <option value="training">Training session</option>
-        </select>
-      </div>
-      <div className="form-group">
-        <label htmlFor="sa-title">Title</label>
-        <input id="sa-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-      </div>
-      <div className="form-group">
-        <label htmlFor="sa-when">Date and time</label>
-        <input id="sa-when" type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} required />
-      </div>
-      <div className="form-group">
-        <label htmlFor="sa-location">Location</label>
-        <input id="sa-location" value={location} onChange={(e) => setLocation(e.target.value)} />
-      </div>
-      <div className="form-group">
-        <label htmlFor="sa-meet">Meeting point</label>
-        <input id="sa-meet" value={meetingPoint} onChange={(e) => setMeetingPoint(e.target.value)} />
-      </div>
-      <div className="form-group">
-        <label htmlFor="sa-distance">Distance (miles)</label>
-        <input
-          id="sa-distance"
-          type="number"
-          min="0"
-          step="0.1"
-          value={distanceMiles}
-          onChange={(e) => setDistanceMiles(e.target.value)}
-        />
-      </div>
-      {activityType !== 'training' && (
-        <div className="form-group">
-          <label htmlFor="sa-pace">Pace groups</label>
-          <input id="sa-pace" value={paceGroups} onChange={(e) => setPaceGroups(e.target.value)} placeholder="Mixed" />
-        </div>
-      )}
-      {activityType === 'training' && (
-        <>
-          <div className="form-group">
-            <label htmlFor="sa-session">Session type</label>
-            <select
-              id="sa-session"
-              value={sessionType}
-              onChange={(e) => setSessionType(Number(e.target.value) as TrainingSessionType)}
-            >
-              {sessionTypes.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="sa-workout">Workout instructions</label>
-            <textarea
-              id="sa-workout"
-              rows={4}
-              value={workoutInstructions}
-              onChange={(e) => setWorkoutInstructions(e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="sa-effort">Target pace or effort</label>
-            <input id="sa-effort" value={targetPaceOrEffort} onChange={(e) => setTargetPaceOrEffort(e.target.value)} />
-          </div>
-          <label className="admin-check">
-            <input
-              type="checkbox"
-              checked={virtualParticipationEnabled}
-              onChange={(e) => setVirtualParticipationEnabled(e.target.checked)}
-            />
-            Allow virtual participation
-          </label>
-        </>
-      )}
-      <div className="form-group">
-        <label htmlFor="sa-desc">Description</label>
-        <textarea id="sa-desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-      </div>
-      {activityType !== 'training' && (
-        <div className="form-group">
-          <label htmlFor="sa-vol">Volunteer roles (comma-separated)</label>
-          <input
-            id="sa-vol"
-            value={volunteerRoles}
-            onChange={(e) => setVolunteerRoles(e.target.value)}
-            placeholder="Marshal, Registration"
-          />
-        </div>
-      )}
-      {error && <p className="form-error">{error}</p>}
-      {message && <p className="volunteer-message">{message}</p>}
-      <button type="submit" className="btn btn-primary" disabled={saving}>
-        {saving ? 'Creating…' : 'Create activity'}
-      </button>
-    </form>
   )
 }

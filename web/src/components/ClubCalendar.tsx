@@ -4,6 +4,7 @@ import { profileApi } from '../api/services'
 import type { CalendarItem } from '../types'
 import { activityKindLabel } from '../types'
 import { ActivityLocationLink } from './ActivityLocationLink'
+import { ActivityTagList } from './ActivityTagList'
 import {
   addDays,
   addMonths,
@@ -251,6 +252,7 @@ function CalendarEvent({ item, compact = false }: { item: CalendarItem; compact?
               {item.isTrainingSession ? ' · Training' : ''}
             </span>
           )}
+          <ActivityTagList tags={item.tags} />
         </span>
       </Link>
       <ActivityLocationLink

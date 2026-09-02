@@ -6,12 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "prod": "vite build && vite preview --host --port 4173",
+    "prod:api": "powershell -NoProfile -ExecutionPolicy Bypass -File ../scripts/run-api-prod-db.ps1",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^7.3.1",
     "@microsoft/signalr": "^10.0.11",
+    "@tabler/core": "^1.4.0",
+    "@tabler/icons-react": "^3.46.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.3"

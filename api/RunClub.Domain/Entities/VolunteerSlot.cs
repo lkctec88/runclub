@@ -5,6 +5,7 @@ public class VolunteerSlot
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid ActivityId { get; set; }
     public string Role { get; set; } = string.Empty;
+    public string? Tag { get; set; }
     public string? Description { get; set; }
     public string? Requirements { get; set; }
     public string? Notes { get; set; }

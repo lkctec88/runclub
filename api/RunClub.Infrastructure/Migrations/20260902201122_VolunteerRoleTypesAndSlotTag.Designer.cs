@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RunClub.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using RunClub.Infrastructure.Persistence;
 namespace RunClub.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260902201122_VolunteerRoleTypesAndSlotTag")]
+    partial class VolunteerRoleTypesAndSlotTag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -206,15 +209,6 @@ namespace RunClub.Infrastructure.Migrations
                     b.Property<string>("PaceGroups")
                         .HasColumnType("text");
 
-                    b.Property<int>("RecurrenceFrequency")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid?>("RecurrenceGroupId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("RecurrenceUntilUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Route")
                         .HasColumnType("text");
 
@@ -246,8 +240,6 @@ namespace RunClub.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClubId");
-
-                    b.HasIndex("RecurrenceGroupId");
 
                     b.ToTable("Activities");
                 });
@@ -383,28 +375,6 @@ namespace RunClub.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("ActivityRatings");
-                });
-
-            modelBuilder.Entity("RunClub.Domain.Entities.ActivityTag", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ActivityId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActivityId", "Label")
-                        .IsUnique();
-
-                    b.ToTable("ActivityTags");
                 });
 
             modelBuilder.Entity("RunClub.Domain.Entities.CalendarFeedToken", b =>
@@ -1024,17 +994,6 @@ namespace RunClub.Infrastructure.Migrations
                     b.Navigation("Activity");
                 });
 
-            modelBuilder.Entity("RunClub.Domain.Entities.ActivityTag", b =>
-                {
-                    b.HasOne("RunClub.Domain.Entities.Activity", "Activity")
-                        .WithMany("Tags")
-                        .HasForeignKey("ActivityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Activity");
-                });
-
             modelBuilder.Entity("RunClub.Domain.Entities.ChatMessage", b =>
                 {
                     b.HasOne("RunClub.Domain.Entities.Club", "Club")
@@ -1143,8 +1102,6 @@ namespace RunClub.Infrastructure.Migrations
                     b.Navigation("CheckOuts");
 
                     b.Navigation("Ratings");
-
-                    b.Navigation("Tags");
 
                     b.Navigation("TrainingParticipations");
 

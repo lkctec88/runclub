@@ -15,6 +15,7 @@ import type {
   TrainingGoal,
   TrainingGroup,
   VolunteerSlot,
+  VolunteerRoleType,
 } from '../types'
 
 export const authApi = {
@@ -96,6 +97,24 @@ export const clubsApi = {
       body: form,
     })
   },
+  volunteerRoleTypes: (clubId: string, includeInactive = false) => {
+    const q = includeInactive ? '?includeInactive=true' : ''
+    return apiFetch<VolunteerRoleType[]>(`/api/clubs/${clubId}/volunteer-role-types${q}`)
+  },
+  createVolunteerRoleType: (clubId: string, data: { name: string; description?: string }) =>
+    apiFetch<VolunteerRoleType>(`/api/clubs/${clubId}/volunteer-role-types`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateVolunteerRoleType: (
+    clubId: string,
+    id: string,
+    data: { name: string; description?: string; isActive: boolean },
+  ) =>
+    apiFetch<VolunteerRoleType>(`/api/clubs/${clubId}/volunteer-role-types/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 }
 
 export const activitiesApi = {
@@ -111,6 +130,9 @@ export const activitiesApi = {
   listGoing: (id: string) => apiFetch<GoingMember[]>(`/api/activities/${id}/going`),
   create: (data: Record<string, unknown>) =>
     apiFetch<ActivitySummary>('/api/activities', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Record<string, unknown>) =>
+    apiFetch<ActivitySummary>(`/api/activities/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  remove: (id: string) => apiFetch(`/api/activities/${id}`, { method: 'DELETE' }),
   setAttendance: (id: string, status: number, paceGroup?: string) =>
     apiFetch(`/api/activities/${id}/attendance`, {
       method: 'POST',
@@ -135,11 +157,13 @@ export const volunteerApi = {
     apiFetch<VolunteerSlot>(`/api/activities/${activityId}/volunteer-slots/${slotId}/claim`, { method: 'POST' }),
   release: (activityId: string, slotId: string) =>
     apiFetch<VolunteerSlot>(`/api/activities/${activityId}/volunteer-slots/${slotId}/release`, { method: 'POST' }),
-  create: (activityId: string, data: { role: string; description?: string }) =>
+  create: (activityId: string, data: { role: string; tag?: string; description?: string }) =>
     apiFetch<VolunteerSlot>(`/api/activities/${activityId}/volunteer-slots`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  remove: (activityId: string, slotId: string) =>
+    apiFetch(`/api/activities/${activityId}/volunteer-slots/${slotId}`, { method: 'DELETE' }),
 }
 
 export const profileApi = {

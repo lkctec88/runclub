@@ -1,0 +1,8 @@
+{
+  "name": "runclub",
+  "private": true,
+  "scripts": {
+    "prod": "npm --prefix web run prod",
+    "prod:api": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-api-prod-db.ps1"
+  }
+}

@@ -4,7 +4,7 @@ import { volunteerApi } from '../api/services'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import type { VolunteerSlot } from '../types'
-import { ActivityKind, VolunteerSlotStatus } from '../types'
+import { ActivityKind, VolunteerSlotStatus, volunteerSlotLabel } from '../types'
 
 interface VolunteerRolesProps {
   activityId: string
@@ -164,14 +164,14 @@ export function VolunteerRoles({
   }
 
   const performRelease = async (slot: VolunteerSlot) => {
-    if ((confirmRelease ?? !compact) && !confirm(`Cancel your ${slot.role} sign-up?`)) return
+    if ((confirmRelease ?? !compact) && !confirm(`Cancel your ${volunteerSlotLabel(slot)} sign-up?`)) return
     setClaimingId(slot.id)
     setError('')
     setMessage('')
     try {
       const updated = await volunteerApi.release(activityId, slot.id)
       setSlots((prev) => prev.map((s) => (s.id === slot.id ? updated : s)))
-      setMessage(`You're no longer signed up for ${slot.role}.`)
+      setMessage(`You're no longer signed up for ${volunteerSlotLabel(slot)}.`)
       onUpdated?.()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not cancel sign-up')
@@ -190,7 +190,7 @@ export function VolunteerRoles({
       const released = await volunteerApi.release(activityId, existing.id)
       const claimed = await volunteerApi.claim(activityId, target.id)
       applySlotUpdates(released, claimed)
-      setMessage(`You're now signed up for ${target.role}.`)
+      setMessage(`You're now signed up for ${volunteerSlotLabel(target)}.`)
       setPendingSwitch(null)
       onUpdated?.()
     } catch (err) {
@@ -226,8 +226,8 @@ export function VolunteerRoles({
 
   const switchDialog = pendingSwitch ? (
     <VolunteerSwitchDialog
-      existingRole={pendingSwitch.existing.role}
-      newRole={pendingSwitch.target.role}
+      existingRole={volunteerSlotLabel(pendingSwitch.existing)}
+      newRole={volunteerSlotLabel(pendingSwitch.target)}
       loading={claimingId === pendingSwitch.target.id}
       onConfirm={() => void performSwitch()}
       onCancel={() => setPendingSwitch(null)}
@@ -257,7 +257,7 @@ export function VolunteerRoles({
                     disabled={claimingId === slot.id}
                     onClick={(e) => requestClaim(e, slot.id)}
                   >
-                    {claimingId === slot.id ? 'Signing up…' : slot.role}
+                    {claimingId === slot.id ? 'Signing up…' : volunteerSlotLabel(slot)}
                   </button>
                 </li>
               ))}
@@ -267,7 +267,7 @@ export function VolunteerRoles({
         {mySlots.length > 0 && (
           <div className="activity-volunteer-signed-up-row">
             <p className="activity-volunteer-signed-up">
-              You're volunteering: {mySlots.map((s) => s.role).join(', ')}
+              You're volunteering: {mySlots.map((s) => volunteerSlotLabel(s)).join(', ')}
             </p>
             {mySlots.map((slot) => (
               <button

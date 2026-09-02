@@ -67,6 +67,15 @@ public class ClubsController : ControllerBase
             LogoUrl = req.LogoUrl
         };
         _db.Clubs.Add(club);
+        foreach (var (name, description) in VolunteerRoleCatalog.Defaults)
+        {
+            _db.VolunteerRoleTypes.Add(new VolunteerRoleType
+            {
+                ClubId = club.Id,
+                Name = name,
+                Description = description
+            });
+        }
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = club.Id }, club);
     }
@@ -319,5 +328,81 @@ public class ClubsController : ControllerBase
         await using var stream = file.OpenReadStream();
         var result = await _csv.BulkDeleteAsync(clubId, stream, dryRun);
         return Ok(result);
+    }
+
+    public record VolunteerRoleTypeRequest(string Name, string? Description, bool IsActive = true);
+
+    [HttpGet("{clubId:guid}/volunteer-role-types")]
+    public async Task<ActionResult> ListVolunteerRoleTypes(Guid clubId, [FromQuery] bool includeInactive = false)
+    {
+        await _auth.EnsureClubAdminAsync(UserId, clubId);
+        var query = _db.VolunteerRoleTypes.Where(t => t.ClubId == clubId);
+        if (!includeInactive) query = query.Where(t => t.IsActive);
+        var rows = await query
+            .OrderBy(t => t.Name)
+            .Select(t => new
+            {
+                t.Id,
+                t.ClubId,
+                t.Name,
+                t.Description,
+                t.IsActive,
+                t.CreatedAtUtc
+            })
+            .ToListAsync();
+        return Ok(rows);
+    }
+
+    [HttpPost("{clubId:guid}/volunteer-role-types")]
+    public async Task<ActionResult> CreateVolunteerRoleType(Guid clubId, VolunteerRoleTypeRequest req)
+    {
+        await _auth.EnsureClubAdminAsync(UserId, clubId);
+        var club = await _db.Clubs.FirstOrDefaultAsync(c => c.Id == clubId && c.IsActive);
+        if (club is null) return NotFound();
+
+        var name = (req.Name ?? "").Trim();
+        if (name.Length == 0) return BadRequest(new { message = "Name is required" });
+
+        var existing = await _db.VolunteerRoleTypes
+            .FirstOrDefaultAsync(t => t.ClubId == clubId && t.Name.ToLower() == name.ToLower());
+        if (existing is not null)
+        {
+            existing.Name = name;
+            existing.Description = string.IsNullOrWhiteSpace(req.Description) ? existing.Description : req.Description.Trim();
+            existing.IsActive = true;
+            await _db.SaveChangesAsync();
+            return Ok(existing);
+        }
+
+        var row = new VolunteerRoleType
+        {
+            ClubId = clubId,
+            Name = name,
+            Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description.Trim()
+        };
+        _db.VolunteerRoleTypes.Add(row);
+        await _db.SaveChangesAsync();
+        return Ok(row);
+    }
+
+    [HttpPut("{clubId:guid}/volunteer-role-types/{id:guid}")]
+    public async Task<ActionResult> UpdateVolunteerRoleType(Guid clubId, Guid id, VolunteerRoleTypeRequest req)
+    {
+        await _auth.EnsureClubAdminAsync(UserId, clubId);
+        var row = await _db.VolunteerRoleTypes.FirstOrDefaultAsync(t => t.Id == id && t.ClubId == clubId);
+        if (row is null) return NotFound();
+
+        var name = (req.Name ?? "").Trim();
+        if (name.Length == 0) return BadRequest(new { message = "Name is required" });
+
+        var clash = await _db.VolunteerRoleTypes
+            .AnyAsync(t => t.ClubId == clubId && t.Id != id && t.Name.ToLower() == name.ToLower());
+        if (clash) return BadRequest(new { message = "A volunteer type with that name already exists" });
+
+        row.Name = name;
+        row.Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description.Trim();
+        row.IsActive = req.IsActive;
+        await _db.SaveChangesAsync();
+        return Ok(row);
     }
 }

@@ -105,6 +105,9 @@ export interface CsvImportResult {
   rows: { row: number; identifier: string; action: string; error?: string }[]
 }
 
+export const RecurrenceFrequency = { None: 0, Weekly: 1, Monthly: 2 } as const
+export type RecurrenceFrequency = (typeof RecurrenceFrequency)[keyof typeof RecurrenceFrequency]
+
 export const TrainingSessionType = {
   Hills: 0,
   TrackIntervals: 1,
@@ -159,6 +162,7 @@ export interface ActivitySummary {
   availableSlots?: number
   claimedSlots?: number
   volunteerSlots?: VolunteerSlot[]
+  tags?: string[]
   myAttendance?: ActivityAttendance | null
   hasRated?: boolean
   myRating?: {
@@ -167,14 +171,29 @@ export interface ActivitySummary {
   } | null
 }
 
+export interface VolunteerRoleType {
+  id: string
+  clubId: string
+  name: string
+  description?: string
+  isActive: boolean
+  createdAtUtc: string
+}
+
 export interface VolunteerSlot {
   id: string
   activityId: string
   role: string
+  tag?: string
   description?: string
   requirements?: string
   assignedUserId?: string
   status: VolunteerSlotStatus
+}
+
+export function volunteerSlotLabel(slot: { role: string; tag?: string | null }) {
+  const tag = slot.tag?.trim()
+  return tag ? `${slot.role} · ${tag}` : slot.role
 }
 
 export interface CalendarItem {
@@ -189,7 +208,8 @@ export interface CalendarItem {
   paceGroups?: string
   virtualParticipationEnabled: boolean
   goingCount: number
-  volunteerSlots: { id: string; role: string; status: VolunteerSlotStatus; assignedUserId?: string }[]
+  tags?: string[]
+  volunteerSlots: { id: string; role: string; tag?: string; status: VolunteerSlotStatus; assignedUserId?: string }[]
 }
 
 export interface ChatMessage {
@@ -231,6 +251,7 @@ export interface ProfileContributions {
   volunteerShifts: {
     id: string
     role: string
+    tag?: string
     description?: string
     status: VolunteerSlotStatus
     activity: ContributionActivity

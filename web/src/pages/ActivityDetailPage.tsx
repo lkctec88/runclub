@@ -5,6 +5,7 @@ import { ApiError } from '../api/client'
 import type { ActivitySummary } from '../types'
 import { hasDistinctMeetingPoint, isRsvpGoing, activityHasEnded } from '../utils/activity'
 import { ActivityLocationLink } from '../components/ActivityLocationLink'
+import { ActivityTagList } from '../components/ActivityTagList'
 import { VolunteerRoles } from '../components/VolunteerRoles'
 import { DidYouGoPrompt } from '../components/DidYouGoPrompt'
 import { GoingRsvp } from '../components/GoingRsvp'
@@ -40,6 +41,9 @@ export function ActivityDetailPage() {
   return (
     <div>
       <h1 className="page-title">{activity.title}</h1>
+      <div className="activity-card-header" style={{ marginBottom: '0.75rem' }}>
+        <ActivityTagList tags={activity.tags} />
+      </div>
       <div className="card">
         <p className="activity-meta">
           {date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
