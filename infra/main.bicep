@@ -26,7 +26,7 @@ param principalType string = 'ServicePrincipal'
 param databasePassword string
 
 @secure()
-@description('JWT signing key (32+ characters)')
+@description('JWT signing key. azd may generate 15 chars; Bicep pads to 32+ if needed.')
 param jwtSigningKey string
 
 var resourceSuffix = take(uniqueString(subscription().id, environmentName, location), 6)

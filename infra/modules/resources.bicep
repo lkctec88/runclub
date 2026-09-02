@@ -15,6 +15,12 @@ param databasePassword string
 @secure()
 param jwtSigningKey string
 
+// azd secretOrRandomPassword is 15 chars (5 lower + 5 upper + 5 numeric).
+// The API requires 32+ in Production. Keep a long existing key; pad a short one.
+var jwtSigningKeyResolved = length(jwtSigningKey) >= 32
+  ? jwtSigningKey
+  : '${jwtSigningKey}${uniqueString(resourceGroup().id, 'jwt-pad-1')}${uniqueString(resourceGroup().id, 'jwt-pad-2')}'
+
 var deployerPrincipalType = empty(principalType) ? 'ServicePrincipal' : principalType
 
 // Key Vault: 3-24 chars, alphanumeric + hyphen
@@ -71,6 +77,13 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableSoftDelete: true
     softDeleteRetentionInDays: 90
     enablePurgeProtection: true
+    // Container Apps resolves Key Vault secret refs from Azure infrastructure IPs.
+    // A Deny firewall (e.g. only a home IP) blocks jwt-signing-key / postgres-connection.
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Allow'
+    }
   }
 }
 
@@ -177,7 +190,7 @@ resource jwtSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
   name: 'jwt-signing-key'
   properties: {
-    value: jwtSigningKey
+    value: jwtSigningKeyResolved
   }
 }
 
