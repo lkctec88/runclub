@@ -12,7 +12,7 @@ import {
   type VolunteerRoleType,
   type VolunteerSlot,
 } from '../types'
-import { isPastActivity } from '../utils/activity'
+import { isPastActivity, matchesActivitySearch } from '../utils/activity'
 import { ActivityTagList } from '../components/ActivityTagList'
 
 type ActivitySection = 'new' | 'existing'
@@ -164,27 +164,6 @@ export function AdminActivitiesPanel({ clubId }: { clubId: string }) {
   )
 }
 
-function matchesActivitySearch(query: string, activity: ActivitySummary) {
-  const q = query.trim().toLowerCase()
-  if (!q) return true
-  const fields = [
-    activity.title,
-    activity.description,
-    activity.location,
-    activity.meetingPoint,
-    activity.paceGroups,
-    activityKindLabel(activity.kind),
-    activity.isTrainingSession ? 'training' : '',
-    activity.distanceMiles,
-    formatWhen(activity.startsAtUtc),
-    ...(activity.tags ?? []),
-  ]
-  const haystack = fields.filter(Boolean).join(' ').toLowerCase()
-  const compact = haystack.replace(/[^a-z0-9]+/g, '')
-  const qCompact = q.replace(/[^a-z0-9]+/g, '')
-  return haystack.includes(q) || (qCompact.length > 0 && compact.includes(qCompact))
-}
-
 function ExistingActivitiesList({
   clubId,
   onEdit,
@@ -211,25 +190,14 @@ function ExistingActivitiesList({
     load()
   }, [clubId])
 
-  const visible = useMemo(
-    () => activities.filter((activity) => matchesActivitySearch(search, activity)),
-    [activities, search],
-  )
   const upcoming = useMemo(
     () =>
-      visible
+      activities
         .filter((a) => !isPastActivity(a))
+        .filter((activity) => matchesActivitySearch(search, activity))
         .slice()
         .sort((a, b) => new Date(a.startsAtUtc).getTime() - new Date(b.startsAtUtc).getTime()),
-    [visible],
-  )
-  const past = useMemo(
-    () =>
-      visible
-        .filter(isPastActivity)
-        .slice()
-        .sort((a, b) => new Date(b.startsAtUtc).getTime() - new Date(a.startsAtUtc).getTime()),
-    [visible],
+    [activities, search],
   )
   const searching = search.trim().length > 0
 
@@ -254,39 +222,30 @@ function ExistingActivitiesList({
         </div>
         {searching && (
           <p className="activity-meta" style={{ marginTop: '0.65rem' }}>
-            {visible.length} match{visible.length === 1 ? '' : 'es'}
+            {upcoming.length} match{upcoming.length === 1 ? '' : 'es'}
           </p>
         )}
       </div>
       <ActivityGroup
-        title="Upcoming"
         items={upcoming}
-        empty={searching ? 'No upcoming activities match that search.' : 'No upcoming activities.'}
+        empty={searching ? 'No activities match that search.' : 'No upcoming activities.'}
         onEdit={onEdit}
-      />
-      <ActivityGroup
-        title="Past"
-        items={past}
-        empty={searching ? 'No past activities match that search.' : 'No past activities.'}
       />
     </div>
   )
 }
 
 function ActivityGroup({
-  title,
   items,
   empty,
   onEdit,
 }: {
-  title: string
   items: ActivitySummary[]
   empty: string
   onEdit?: (activity: ActivitySummary) => void
 }) {
   return (
     <section className="admin-activity-group">
-      <h2 className="admin-card-title">{title}</h2>
       {items.length === 0 ? (
         <div className="empty-state card">{empty}</div>
       ) : (
@@ -304,6 +263,17 @@ function ActivityGroup({
                 <p className="activity-meta">{activity.location ?? activity.meetingPoint}</p>
               )}
               <ActivityTagList tags={activity.tags} />
+              {(activity.volunteerSlots?.length ?? 0) > 0 && (
+                <ul className="activity-tags admin-activity-volunteers">
+                  {(activity.volunteerSlots ?? []).map((slot) => (
+                    <li key={slot.id} className="badge badge-volunteer">
+                      {slot.assignedUserName
+                        ? `${volunteerSlotLabel(slot)} · ${slot.assignedUserName}`
+                        : volunteerSlotLabel(slot)}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             {onEdit && (
               <button type="button" className="btn btn-outline btn-sm" onClick={() => onEdit(activity)}>
@@ -775,7 +745,11 @@ function ActivityForm({
             <ul className="volunteer-added-list">
               {existingSlots.map((slot) => (
                 <li key={slot.id} className="volunteer-added-item">
-                  <span>{volunteerSlotLabel(slot)}</span>
+                  <span>
+                    {slot.assignedUserName
+                      ? `${volunteerSlotLabel(slot)} · ${slot.assignedUserName}`
+                      : volunteerSlotLabel(slot)}
+                  </span>
                   <button type="button" className="volunteer-remove" onClick={() => removeExistingSlot(slot)}>
                     Remove
                   </button>

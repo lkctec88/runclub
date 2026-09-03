@@ -188,6 +188,7 @@ export interface VolunteerSlot {
   description?: string
   requirements?: string
   assignedUserId?: string
+  assignedUserName?: string
   status: VolunteerSlotStatus
 }
 

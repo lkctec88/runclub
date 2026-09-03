@@ -1,4 +1,4 @@
-import { ActivityKind, AttendanceStatus, type ActivityAttendance, type ActivitySummary } from '../types'
+import { ActivityKind, AttendanceStatus, activityKindLabel, type ActivityAttendance, type ActivitySummary } from '../types'
 
 export function activityLocationLabel(location?: string, meetingPoint?: string) {
   if (location && meetingPoint && location !== meetingPoint) {
@@ -55,6 +55,46 @@ export function isPastActivity(activity: { startsAtUtc: string }) {
   return new Date(activity.startsAtUtc).getTime() < Date.now()
 }
 
+export const CURRENT_ACTIVITY_DAYS = 5
+
+function startOfLocalDay(value: Date) {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime()
+}
+
 export function isCurrentActivity(activity: { startsAtUtc: string }) {
-  return !isPastActivity(activity)
+  if (isPastActivity(activity)) return false
+  const startDay = startOfLocalDay(new Date(activity.startsAtUtc))
+  const today = new Date()
+  const firstDay = startOfLocalDay(today)
+  const lastDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + CURRENT_ACTIVITY_DAYS - 1).getTime()
+  return startDay >= firstDay && startDay <= lastDay
+}
+
+export function matchesActivitySearch(query: string, activity: ActivitySummary) {
+  const q = query.trim().toLowerCase()
+  if (!q) return true
+  const when = new Date(activity.startsAtUtc).toLocaleString(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const fields = [
+    activity.title,
+    activity.description,
+    activity.location,
+    activity.meetingPoint,
+    activity.paceGroups,
+    activityKindLabel(activity.kind),
+    activity.isTrainingSession ? 'training' : '',
+    activity.distanceMiles,
+    when,
+    ...(activity.tags ?? []),
+    ...(activity.volunteerSlots ?? []).flatMap((slot) => [slot.role, slot.tag, slot.assignedUserName]),
+  ]
+  const haystack = fields.filter(Boolean).join(' ').toLowerCase()
+  const compact = haystack.replace(/[^a-z0-9]+/g, '')
+  const qCompact = q.replace(/[^a-z0-9]+/g, '')
+  return haystack.includes(q) || (qCompact.length > 0 && compact.includes(qCompact))
 }

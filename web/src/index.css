@@ -793,6 +793,28 @@ textarea {
   gap: 0.75rem;
 }
 
+.admin-activity-row > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-activity-row .btn {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.admin-activity-volunteers {
+  margin-top: 0.5rem;
+}
+
+.badge-volunteer {
+  background: rgba(227, 27, 35, 0.08);
+  color: var(--navy);
+  border: 1px solid rgba(227, 27, 35, 0.2);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .admin-existing-slots {
   margin: 0 0 0.75rem;
   padding-left: 1.1rem;

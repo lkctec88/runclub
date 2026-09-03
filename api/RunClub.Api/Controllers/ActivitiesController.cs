@@ -124,6 +124,10 @@ public class ActivitiesController : ControllerBase
                     s.Description,
                     s.Requirements,
                     s.AssignedUserId,
+                    AssignedUserName = _db.MemberProfiles
+                        .Where(p => p.UserId == s.AssignedUserId)
+                        .Select(p => p.FirstName + " " + p.LastName)
+                        .FirstOrDefault(),
                     s.Status
                 }).ToList(),
                 HasRated = r.Ratings.Any(x => x.UserId == UserId),
@@ -211,6 +215,10 @@ public class ActivitiesController : ControllerBase
                     s.Description,
                     s.Requirements,
                     s.AssignedUserId,
+                    AssignedUserName = _db.MemberProfiles
+                        .Where(p => p.UserId == s.AssignedUserId)
+                        .Select(p => p.FirstName + " " + p.LastName)
+                        .FirstOrDefault(),
                     s.Status
                 }).ToList(),
                 HasRated = r.Ratings.Any(x => x.UserId == UserId),
