@@ -29,10 +29,10 @@ export function ActivitiesPage() {
     .slice()
     .sort((a, b) => new Date(a.startsAtUtc).getTime() - new Date(b.startsAtUtc).getTime())
   const pendingConfirm = activities.filter(needsAttendanceConfirm)
-  const restCurrent = current.filter((activity) => !needsAttendanceConfirm(activity))
   const past = activities
     .filter(isPastActivity)
     .filter((activity, index, list) => list.findIndex((item) => item.id === activity.id) === index)
+    .filter((activity) => !needsAttendanceConfirm(activity))
     .slice()
     .sort((a, b) => new Date(b.startsAtUtc).getTime() - new Date(a.startsAtUtc).getTime())
 
@@ -63,6 +63,16 @@ export function ActivitiesPage() {
       </div>
 
       {view === 'current' ? (
+        current.length === 0 ? (
+          <div className="empty-state card">
+            <p>No current or upcoming activities yet.</p>
+          </div>
+        ) : (
+          current.map((activity) => (
+            <ActivityCard key={activity.id} activity={activity} onAttendanceUpdated={load} />
+          ))
+        )
+      ) : (
         <>
           {pendingConfirm.length > 0 && (
             <section className="did-you-go-section">
@@ -72,25 +82,16 @@ export function ActivitiesPage() {
               ))}
             </section>
           )}
-
-          {restCurrent.length === 0 && pendingConfirm.length === 0 ? (
+          {past.length === 0 && pendingConfirm.length === 0 ? (
             <div className="empty-state card">
-              <p>No current or upcoming activities yet.</p>
+              <p>No past activities yet.</p>
             </div>
           ) : (
-            restCurrent.map((activity) => (
+            past.map((activity) => (
               <ActivityCard key={activity.id} activity={activity} onAttendanceUpdated={load} />
             ))
           )}
         </>
-      ) : past.length === 0 ? (
-        <div className="empty-state card">
-          <p>No past activities yet.</p>
-        </div>
-      ) : (
-        past.map((activity) => (
-          <ActivityCard key={activity.id} activity={activity} onAttendanceUpdated={load} />
-        ))
       )}
 
       <div className="action-row">

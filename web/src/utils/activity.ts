@@ -51,21 +51,10 @@ export function needsAttendanceConfirm(activity: ActivitySummary) {
   return false
 }
 
-export const CURRENT_ACTIVITY_DAYS = 5
-
-function startOfLocalDay(value: Date) {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime()
-}
-
 export function isPastActivity(activity: { startsAtUtc: string }) {
   return new Date(activity.startsAtUtc).getTime() < Date.now()
 }
 
 export function isCurrentActivity(activity: { startsAtUtc: string }) {
-  if (isPastActivity(activity)) return false
-  const startDay = startOfLocalDay(new Date(activity.startsAtUtc))
-  const today = new Date()
-  const firstDay = startOfLocalDay(today)
-  const lastDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + CURRENT_ACTIVITY_DAYS - 1).getTime()
-  return startDay >= firstDay && startDay <= lastDay
+  return !isPastActivity(activity)
 }

@@ -25,8 +25,8 @@ export function SuperAdminPage() {
       <h1 className="page-title">Admin</h1>
       <p className="page-subtitle">{clubs.find((c) => c.id === clubId)?.name ?? 'Club'}</p>
 
-      <div className="calendar-view-toggle" role="tablist" aria-label="Admin sections">
-        {isSuperAdmin && (
+      {isSuperAdmin ? (
+        <div className="calendar-view-toggle" role="tablist" aria-label="Admin sections">
           <button
             type="button"
             role="tab"
@@ -36,17 +36,19 @@ export function SuperAdminPage() {
           >
             People
           </button>
-        )}
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'activities'}
-          className={`calendar-view-btn${tab === 'activities' ? ' active' : ''}`}
-          onClick={() => setTab('activities')}
-        >
-          Activities
-        </button>
-      </div>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'activities'}
+            className={`calendar-view-btn${tab === 'activities' ? ' active' : ''}`}
+            onClick={() => setTab('activities')}
+          >
+            Activities
+          </button>
+        </div>
+      ) : (
+        <h2 className="section-title">Activities</h2>
+      )}
 
       {tab === 'people' && isSuperAdmin ? <PeoplePanel clubId={clubId} /> : <AdminActivitiesPanel clubId={clubId} />}
     </div>
