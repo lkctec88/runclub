@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { profileApi } from '../api/services'
+import { LinkToCalendar } from '../components/LinkToCalendar'
 import { useAuth } from '../auth/AuthContext'
 import type { MemberProfile, ProfileContributions } from '../types'
 import {
@@ -12,18 +13,12 @@ export function ProfilePage() {
   const [profile, setProfile] = useState<MemberProfile | null>(user?.profile ?? null)
   const [contributions, setContributions] = useState<ProfileContributions | null>(null)
   const [openSection, setOpenSection] = useState<ProfileSection | null>(null)
-  const [feedUrl, setFeedUrl] = useState('')
   const [goalLabel, setGoalLabel] = useState('')
 
   useEffect(() => {
     profileApi.me().then(setProfile)
     profileApi.contributions().then(setContributions)
   }, [])
-
-  const subscribeCalendar = async () => {
-    const res = await profileApi.createFeedToken()
-    setFeedUrl(res.url)
-  }
 
   const addGoal = async () => {
     if (!goalLabel.trim()) return
@@ -116,14 +111,7 @@ export function ProfilePage() {
           </button>
 
           <h2 style={{ fontSize: '1rem', color: 'var(--navy)', marginTop: '1.5rem' }}>Calendar sync</h2>
-          <button type="button" className="btn btn-outline" onClick={subscribeCalendar}>
-            Get subscribe link
-          </button>
-          {feedUrl && (
-            <p className="activity-meta" style={{ marginTop: '0.75rem', wordBreak: 'break-all' }}>
-              {feedUrl}
-            </p>
-          )}
+          <LinkToCalendar />
         </>
       )}
     </div>

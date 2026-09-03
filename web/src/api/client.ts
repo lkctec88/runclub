@@ -3,8 +3,12 @@ const TOKEN_KEY = 'runclub_token'
 /** Empty in local Vite (proxy); set at Azure build via VITE_API_URL. */
 const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
 
-function apiUrl(path: string): string {
+export function apiUrl(path: string): string {
   return `${API_BASE}${path}`
+}
+
+export function activityIcsHref(activityId: string) {
+  return apiUrl(`/api/activities/${activityId}.ics`)
 }
 
 export function getToken(): string | null {

@@ -11,14 +11,26 @@ export function hasDistinctMeetingPoint(location?: string, meetingPoint?: string
   return Boolean(location && meetingPoint && location !== meetingPoint)
 }
 
-const DEFAULT_RUN_DURATION_MS = 2 * 60 * 60 * 1000
+const HOUR_MS = 60 * 60 * 1000
 
-export function activityEffectiveEnd(activity: { startsAtUtc: string; endsAtUtc?: string }) {
-  if (activity.endsAtUtc) return new Date(activity.endsAtUtc)
-  return new Date(new Date(activity.startsAtUtc).getTime() + DEFAULT_RUN_DURATION_MS)
+export function defaultActivityDurationMs(kind?: ActivityKind) {
+  return kind === ActivityKind.Race ? 2 * HOUR_MS : HOUR_MS
 }
 
-export function activityHasEnded(activity: { startsAtUtc: string; endsAtUtc?: string }) {
+export function activityEffectiveEnd(activity: {
+  startsAtUtc: string
+  endsAtUtc?: string
+  kind?: ActivityKind
+}) {
+  if (activity.endsAtUtc) return new Date(activity.endsAtUtc)
+  return new Date(new Date(activity.startsAtUtc).getTime() + defaultActivityDurationMs(activity.kind))
+}
+
+export function activityHasEnded(activity: {
+  startsAtUtc: string
+  endsAtUtc?: string
+  kind?: ActivityKind
+}) {
   return Date.now() >= activityEffectiveEnd(activity).getTime()
 }
 

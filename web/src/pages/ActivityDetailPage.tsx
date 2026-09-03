@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { activitiesApi } from '../api/services'
 import { ApiError } from '../api/client'
+import { activitiesApi } from '../api/services'
 import type { ActivitySummary } from '../types'
 import { hasDistinctMeetingPoint, isRsvpGoing, activityHasEnded } from '../utils/activity'
 import { ActivityLocationLink } from '../components/ActivityLocationLink'
@@ -10,6 +10,7 @@ import { VolunteerRoles } from '../components/VolunteerRoles'
 import { DidYouGoPrompt } from '../components/DidYouGoPrompt'
 import { GoingRsvp } from '../components/GoingRsvp'
 import { GoingPeople } from '../components/GoingPeople'
+import { AddToCalendarButton } from '../components/AddToCalendarButton'
 
 export function ActivityDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -89,11 +90,7 @@ export function ActivityDetailPage() {
 
       <div className="action-row">
         <GoingRsvp activity={activity} showJoin onUpdated={load} />
-        {!ended && (
-          <a href={`/api/activities/${activity.id}.ics`} className="btn btn-outline" download>
-            Add to calendar
-          </a>
-        )}
+        {!ended && !going && <AddToCalendarButton event={activity} variant="button" onGoing={load} />}
         {ended && !going && <p className="activity-meta">This activity has ended.</p>}
       </div>
     </div>

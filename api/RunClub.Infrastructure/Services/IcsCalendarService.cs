@@ -36,13 +36,29 @@ public class IcsCalendarService : IIcsCalendarService
             .Where(r => r.Kind == ActivityKind.PersonalActivity && r.CreatedByUserId == userId && r.IsActive)
             .ToListAsync(ct);
 
-        var activities = going.Concat(virtualRuns).Concat(volunteered).Concat(personal)
+        var clubIds = await _db.ClubMemberships
+            .Where(m => m.UserId == userId && m.IsActive)
+            .Select(m => m.ClubId)
+            .ToListAsync(ct);
+        var now = DateTime.UtcNow;
+        var clubUpcoming = clubIds.Count == 0
+            ? new List<Domain.Entities.Activity>()
+            : await _db.Activities
+                .Where(a =>
+                    a.IsActive
+                    && a.ClubId != null
+                    && clubIds.Contains(a.ClubId.Value)
+                    && (a.Kind == ActivityKind.ClubActivity || a.Kind == ActivityKind.Race)
+                    && a.StartsAtUtc >= now)
+                .ToListAsync(ct);
+
+        var activities = going.Concat(virtualRuns).Concat(volunteered).Concat(personal).Concat(clubUpcoming)
             .GroupBy(r => r.Id)
             .Select(g => g.First())
             .OrderBy(r => r.StartsAtUtc)
             .ToList();
 
-        return BuildCalendar("RunClub Personal", activities);
+        return BuildCalendar("RunClub", activities);
     }
 
     public async Task<string> BuildActivityEventAsync(Guid activityId, CancellationToken ct = default)
@@ -58,10 +74,13 @@ public class IcsCalendarService : IIcsCalendarService
         sb.AppendLine("BEGIN:VCALENDAR");
         sb.AppendLine("VERSION:2.0");
         sb.AppendLine("PRODID:-//RunClub//EN");
+        sb.AppendLine("METHOD:PUBLISH");
+        sb.AppendLine("X-PUBLISHED-TTL:PT6H");
+        sb.AppendLine("REFRESH-INTERVAL;VALUE=DURATION:PT6H");
         sb.AppendLine($"X-WR-CALNAME:{Escape(name)}");
         foreach (var activity in activities)
         {
-            var end = activity.EndsAtUtc ?? activity.StartsAtUtc.AddHours(1);
+            var end = ActivitySchedule.EffectiveEndUtc(activity.StartsAtUtc, activity.EndsAtUtc, activity.Kind);
             sb.AppendLine("BEGIN:VEVENT");
             sb.AppendLine($"UID:{activity.Id}@runclub");
             sb.AppendLine($"DTSTAMP:{Format(DateTime.UtcNow)}");

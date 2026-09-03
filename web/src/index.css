@@ -1092,6 +1092,77 @@ textarea {
   margin-top: 1rem;
 }
 
+.action-row .add-to-calendar {
+  margin-top: 0;
+}
+
+.calendar-link-card .btn {
+  display: inline-flex;
+  width: auto;
+}
+
+.calendar-link-result {
+  margin-top: 0.75rem;
+}
+
+.calendar-link-result input {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+
+.activity-calendar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--blue);
+  background: none;
+  border: 0;
+  padding: 0;
+  width: auto;
+  cursor: pointer;
+}
+
+.add-to-calendar {
+  position: relative;
+  margin-top: 0.35rem;
+}
+
+.add-to-calendar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.45rem;
+  padding: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+}
+
+.add-to-calendar-menu button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: var(--bg);
+  color: var(--navy);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.add-to-calendar-menu button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1293,6 +1364,10 @@ textarea {
   background: var(--navy);
 }
 
+.calendar-dot--going {
+  background: var(--success);
+}
+
 .calendar-day-detail {
   margin-top: 0.25rem;
 }
@@ -1353,6 +1428,16 @@ textarea {
 
 .calendar-event--compact .calendar-event-link {
   padding: 0.4rem 0.5rem;
+}
+
+.calendar-event.is-going .calendar-event-link {
+  background: rgba(5, 150, 105, 0.12);
+}
+
+.calendar-event-going {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--success);
 }
 
 .calendar-empty-day {

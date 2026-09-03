@@ -406,6 +406,7 @@ public class ProfilesCalendarChatController : ControllerBase
                 r.VirtualParticipationEnabled,
                 Tags = r.Tags.OrderBy(t => t.Label).Select(t => t.Label).ToList(),
                 GoingCount = r.Attendances.Count(a => a.Status == AttendanceStatus.Going),
+                IsGoing = r.Attendances.Any(a => a.UserId == UserId && a.Status == AttendanceStatus.Going),
                 VolunteerSlots = r.VolunteerSlots.Select(s => new
                 {
                     s.Id,
@@ -424,9 +425,12 @@ public class ProfilesCalendarChatController : ControllerBase
     public async Task<ActionResult> CreateFeedToken()
     {
         var existing = await _db.CalendarFeedTokens
-            .Where(t => t.UserId == UserId && t.RevokedAtUtc == null)
-            .ToListAsync();
-        foreach (var t in existing) t.RevokedAtUtc = DateTime.UtcNow;
+            .FirstOrDefaultAsync(t => t.UserId == UserId && t.RevokedAtUtc == null);
+        if (existing is not null)
+        {
+            var existingUrl = $"{Request.Scheme}://{Request.Host}/api/calendar/{existing.Token}.ics";
+            return Ok(new { existing.Token, url = existingUrl });
+        }
 
         var token = new CalendarFeedToken
         {

@@ -2,13 +2,14 @@ namespace RunClub.Domain;
 
 public static class ActivitySchedule
 {
-    public static readonly TimeSpan DefaultDuration = TimeSpan.FromHours(2);
+    public static TimeSpan DefaultDuration(ActivityKind kind)
+        => kind == ActivityKind.Race ? TimeSpan.FromHours(2) : TimeSpan.FromHours(1);
 
-    public static DateTime EffectiveEndUtc(DateTime startsAtUtc, DateTime? endsAtUtc)
-        => endsAtUtc ?? startsAtUtc.Add(DefaultDuration);
+    public static DateTime EffectiveEndUtc(DateTime startsAtUtc, DateTime? endsAtUtc, ActivityKind kind)
+        => endsAtUtc ?? startsAtUtc.Add(DefaultDuration(kind));
 
-    public static bool HasEnded(DateTime startsAtUtc, DateTime? endsAtUtc, DateTime utcNow)
-        => utcNow >= EffectiveEndUtc(startsAtUtc, endsAtUtc);
+    public static bool HasEnded(DateTime startsAtUtc, DateTime? endsAtUtc, DateTime utcNow, ActivityKind kind)
+        => utcNow >= EffectiveEndUtc(startsAtUtc, endsAtUtc, kind);
 
     public const int MaxOccurrences = 52;
     public const int DefaultOccurrenceCount = 12;

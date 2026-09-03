@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import type { ActivitySummary } from '../types'
+import { isPastActivity, isRsvpGoing } from '../utils/activity'
 import { activityKindLabel } from '../types'
+import { AddToCalendarButton } from './AddToCalendarButton'
 import { ActivityLocationLink } from './ActivityLocationLink'
 import { ActivityTagList } from './ActivityTagList'
 import { VolunteerRoles } from './VolunteerRoles'
@@ -26,7 +28,7 @@ export function ActivityCard({
       role="link"
       tabIndex={0}
       onClick={(e) => {
-        if ((e.target as HTMLElement).closest('button, a, .activity-volunteer-slots, .did-you-go, .activity-going-rsvp, .activity-going-count, .dialog-backdrop')) return
+        if ((e.target as HTMLElement).closest('button, a, .activity-volunteer-slots, .did-you-go, .activity-going-rsvp, .activity-going-count, .add-to-calendar, .dialog-backdrop')) return
         navigate(`/activities/${activity.id}`)
       }}
       onKeyDown={(e) => {
@@ -51,6 +53,9 @@ export function ActivityCard({
       </p>
       {activity.distanceMiles && <p className="activity-meta">{activity.distanceMiles} miles · {activity.paceGroups ?? 'Mixed pace'}</p>}
       <ActivityLocationLink location={activity.location} meetingPoint={activity.meetingPoint} />
+      {!isPastActivity(activity) && !isRsvpGoing(activity.myAttendance) && (
+        <AddToCalendarButton event={activity} onGoing={onAttendanceUpdated} />
+      )}
       <VolunteerRoles
         activityId={activity.id}
         runKind={activity.kind}

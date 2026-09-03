@@ -208,6 +208,7 @@ export interface CalendarItem {
   paceGroups?: string
   virtualParticipationEnabled: boolean
   goingCount: number
+  isGoing?: boolean
   tags?: string[]
   volunteerSlots: { id: string; role: string; tag?: string; status: VolunteerSlotStatus; assignedUserId?: string }[]
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { profileApi } from '../api/services'
+import { AddToCalendarButton } from './AddToCalendarButton'
 import type { CalendarItem } from '../types'
 import { activityKindLabel } from '../types'
 import { ActivityLocationLink } from './ActivityLocationLink'
@@ -34,13 +35,15 @@ export function ClubCalendar({ clubId }: ClubCalendarProps) {
   const range = useMemo(() => getViewRange(view, cursor), [view, cursor])
   const today = useMemo(() => new Date(), [])
 
-  useEffect(() => {
+  const load = () => {
     setLoading(true)
     profileApi
       .calendar(clubId, { from: toApiDate(range.from), to: toApiDate(range.to) })
       .then(setItems)
       .finally(() => setLoading(false))
-  }, [clubId, range.from, range.to])
+  }
+
+  useEffect(load, [clubId, range.from, range.to])
 
   useEffect(() => {
     setSelectedDay(null)
@@ -111,7 +114,7 @@ export function ClubCalendar({ clubId }: ClubCalendarProps) {
       {loading ? (
         <p className="calendar-loading">Loading calendar…</p>
       ) : view === 'week' ? (
-        <WeekView days={getWeekDays(cursor)} today={today} itemsByDay={itemsByDay} />
+        <WeekView days={getWeekDays(cursor)} today={today} itemsByDay={itemsByDay} onGoing={load} />
       ) : (
         <MonthView
           cursor={cursor}
@@ -119,6 +122,7 @@ export function ClubCalendar({ clubId }: ClubCalendarProps) {
           itemsByDay={itemsByDay}
           selectedDay={selectedDay}
           onSelectDay={setSelectedDay}
+          onGoing={load}
         />
       )}
     </div>
@@ -129,10 +133,12 @@ function WeekView({
   days,
   today,
   itemsByDay,
+  onGoing,
 }: {
   days: Date[]
   today: Date
   itemsByDay: Map<string, CalendarItem[]>
+  onGoing?: () => void
 }) {
   return (
     <div className="calendar-week">
@@ -151,7 +157,7 @@ function WeekView({
             ) : (
               <ul className="calendar-event-list">
                 {dayItems.map((item) => (
-                  <CalendarEvent key={item.id} item={item} compact />
+                  <CalendarEvent key={item.id} item={item} compact onGoing={onGoing} />
                 ))}
               </ul>
             )}
@@ -168,12 +174,14 @@ function MonthView({
   itemsByDay,
   selectedDay,
   onSelectDay,
+  onGoing,
 }: {
   cursor: Date
   today: Date
   itemsByDay: Map<string, CalendarItem[]>
   selectedDay: Date | null
   onSelectDay: (day: Date | null) => void
+  onGoing?: () => void
 }) {
   const gridDays = getMonthGridDays(cursor)
   const currentMonth = cursor.getMonth()
@@ -206,7 +214,7 @@ function MonthView({
                   {dayItems.slice(0, 3).map((item) => (
                     <span
                       key={item.id}
-                      className={`calendar-dot${item.isTrainingSession ? ' calendar-dot--training' : ''}`}
+                      className={`calendar-dot${item.isGoing ? ' calendar-dot--going' : item.isTrainingSession ? ' calendar-dot--training' : ''}`}
                     />
                   ))}
                 </span>
@@ -226,7 +234,7 @@ function MonthView({
           ) : (
             <ul className="calendar-event-list">
               {selectedItems.map((item) => (
-                <CalendarEvent key={item.id} item={item} />
+                <CalendarEvent key={item.id} item={item} onGoing={onGoing} />
               ))}
             </ul>
           )}
@@ -236,12 +244,20 @@ function MonthView({
   )
 }
 
-function CalendarEvent({ item, compact = false }: { item: CalendarItem; compact?: boolean }) {
+function CalendarEvent({
+  item,
+  compact = false,
+  onGoing,
+}: {
+  item: CalendarItem
+  compact?: boolean
+  onGoing?: () => void
+}) {
   const date = new Date(item.startsAtUtc)
   const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <li className={`calendar-event${compact ? ' calendar-event--compact' : ''}`}>
+    <li className={`calendar-event${compact ? ' calendar-event--compact' : ''}${item.isGoing ? ' is-going' : ''}`}>
       <Link to={`/activities/${item.id}`} className="calendar-event-link">
         <span className="calendar-event-time">{time}</span>
         <span className="calendar-event-body">
@@ -253,6 +269,7 @@ function CalendarEvent({ item, compact = false }: { item: CalendarItem; compact?
             </span>
           )}
           <ActivityTagList tags={item.tags} />
+          {item.isGoing && <span className="calendar-event-going">You're going</span>}
         </span>
       </Link>
       <ActivityLocationLink
@@ -260,6 +277,9 @@ function CalendarEvent({ item, compact = false }: { item: CalendarItem; compact?
         meetingPoint={item.meetingPoint}
         className="calendar-event-location"
       />
+      {new Date(item.startsAtUtc).getTime() >= Date.now() && !item.isGoing && (
+        <AddToCalendarButton event={item} onGoing={onGoing} />
+      )}
     </li>
   )
 }

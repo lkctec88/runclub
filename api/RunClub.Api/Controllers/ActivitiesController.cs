@@ -349,7 +349,7 @@ public class ActivitiesController : ControllerBase
         if (activity is null || !activity.IsActive) return NotFound();
         if (activity.Kind == ActivityKind.PersonalActivity) return BadRequest();
         if (activity.ClubId.HasValue) await _auth.EnsureClubMemberAsync(UserId, activity.ClubId.Value);
-        if (ActivitySchedule.HasEnded(activity.StartsAtUtc, activity.EndsAtUtc, DateTime.UtcNow))
+        if (ActivitySchedule.HasEnded(activity.StartsAtUtc, activity.EndsAtUtc, DateTime.UtcNow, activity.Kind))
             return BadRequest("This activity has ended");
 
         var attendance = await _db.ActivityAttendances.FirstOrDefaultAsync(a => a.ActivityId == id && a.UserId == UserId);
@@ -385,7 +385,7 @@ public class ActivitiesController : ControllerBase
         if (activity is null || !activity.IsActive) return NotFound();
         if (activity.Kind == ActivityKind.PersonalActivity) return BadRequest();
         if (activity.ClubId.HasValue) await _auth.EnsureClubMemberAsync(UserId, activity.ClubId.Value);
-        if (!ActivitySchedule.HasEnded(activity.StartsAtUtc, activity.EndsAtUtc, DateTime.UtcNow))
+        if (!ActivitySchedule.HasEnded(activity.StartsAtUtc, activity.EndsAtUtc, DateTime.UtcNow, activity.Kind))
             return BadRequest("This activity has not finished yet");
 
         var attendance = await _db.ActivityAttendances.FirstOrDefaultAsync(a => a.ActivityId == id && a.UserId == UserId);
